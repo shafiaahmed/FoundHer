@@ -14,6 +14,7 @@ const EMPTY_FORM: OnboardingData = {
   university: "",
   program: "",
   year: "",
+  company: "",
   interests: [],
   helpWith: [],
   lookingFor: [],
@@ -49,6 +50,7 @@ export function OnboardingForm({ userId }: { userId: string }) {
       university: form.university,
       program: form.program,
       year: form.year,
+      company: form.company.trim() || null,
       interests: form.interests,
       help_with: form.helpWith,
       looking_for: form.lookingFor,
@@ -108,6 +110,14 @@ export function OnboardingForm({ userId }: { userId: string }) {
                   value={form.program}
                   onChange={(e) => setForm({ ...form, program: e.target.value })}
                   placeholder="Computer Science"
+                  className="input"
+                />
+              </Field>
+              <Field label="Current or past company (optional)">
+                <input
+                  value={form.company}
+                  onChange={(e) => setForm({ ...form, company: e.target.value })}
+                  placeholder="Shopify"
                   className="input"
                 />
               </Field>

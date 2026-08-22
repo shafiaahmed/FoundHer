@@ -20,6 +20,7 @@ export async function Navbar() {
             <>
               <NavLink href="/account">My Profile</NavLink>
               <NavLink href="/connections">My Connections</NavLink>
+              <NavLink href="/messages">Messages</NavLink>
               <NotificationBell />
               <LogoutButton />
             </>

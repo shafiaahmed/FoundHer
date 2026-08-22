@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MatchBadge } from "@/components/MatchBadge";
 import { ConnectModal } from "@/components/ConnectModal";
 import { getAvatarColor, getInitials } from "@/lib/format";
+import { isRealProfileId } from "@/lib/realProfile";
+import { checkCanMessage } from "@/lib/supabase/canMessage";
+import { createClient } from "@/lib/supabase/client";
+import { findExistingConnection } from "@/lib/supabase/connectionCheck";
 import { useAuthGate } from "@/lib/supabase/useAuthGate";
 import { MatchReason, Profile } from "@/lib/types";
 
@@ -16,7 +20,36 @@ interface ProfileCardProps {
 
 export function ProfileCard({ profile, score, reasons = [] }: ProfileCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [alreadySent, setAlreadySent] = useState(false);
+  const [messagingUnlocked, setMessagingUnlocked] = useState(false);
   const requireAuth = useAuthGate();
+  const isReal = isRealProfileId(profile.id);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const existing = await findExistingConnection(supabase, user.id, profile.id);
+      if (cancelled) return;
+      if (existing) setAlreadySent(true);
+
+      if (isReal) {
+        const unlocked = await checkCanMessage(supabase, user.id, profile.id);
+        if (!cancelled && unlocked) setMessagingUnlocked(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile.id, isReal]);
 
   return (
     <>
@@ -36,6 +69,7 @@ export function ProfileCard({ profile, score, reasons = [] }: ProfileCardProps) 
               <p className="text-sm text-stone-500">
                 {profile.program} &middot; {profile.year}
               </p>
+              {profile.company && <p className="text-sm text-stone-500">{profile.company}</p>}
             </div>
           </Link>
           {score !== undefined && <MatchBadge score={score} />}
@@ -91,13 +125,26 @@ export function ProfileCard({ profile, score, reasons = [] }: ProfileCardProps) 
           >
             View profile
           </Link>
-          <button
-            type="button"
-            onClick={() => requireAuth(() => setModalOpen(true))}
-            className="flex-1 rounded-full bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-800"
-          >
-            Connect
-          </button>
+          {messagingUnlocked ? (
+            <Link
+              href={`/messages/${profile.id}`}
+              className="flex-1 rounded-full bg-violet-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-violet-800"
+            >
+              Message
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => requireAuth(() => setModalOpen(true))}
+              className={`flex-1 rounded-full px-4 py-2.5 text-sm font-semibold transition ${
+                alreadySent
+                  ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                  : "bg-violet-700 text-white hover:bg-violet-800"
+              }`}
+            >
+              {alreadySent ? "Invite to Connect Sent" : "Connect"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -106,6 +153,7 @@ export function ProfileCard({ profile, score, reasons = [] }: ProfileCardProps) 
         reasons={reasons}
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        onSent={() => setAlreadySent(true)}
       />
     </>
   );

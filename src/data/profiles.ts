@@ -14,6 +14,7 @@ export const PROFILES: Profile[] = [
     helpWith: ["Technical Interviews", "LeetCode", "Mentorship", "Career Advice"],
     lookingFor: ["Hackathons", "AI/ML"],
     communities: ["Muslim Women in Tech"],
+    company: "Wealthsimple",
   },
   {
     id: "priya-natarajan",
@@ -28,6 +29,7 @@ export const PROFILES: Profile[] = [
     helpWith: ["Hackathons", "Resume Reviews", "Study Buddy"],
     lookingFor: ["Internships", "Cloud"],
     communities: [],
+    company: "Wealthsimple",
   },
   {
     id: "fatima-siddiqui",
@@ -70,6 +72,7 @@ export const PROFILES: Profile[] = [
     helpWith: ["Technical Interviews", "LeetCode", "Resume Reviews", "Career Advice"],
     lookingFor: ["Mentorship"],
     communities: [],
+    company: "Google",
   },
   {
     id: "layla-hassan",
@@ -126,6 +129,7 @@ export const PROFILES: Profile[] = [
     helpWith: ["Mentorship", "Career Advice", "Course Advice"],
     lookingFor: ["Cloud"],
     communities: ["Muslim Women in Tech"],
+    company: "Shopify",
   },
   {
     id: "diana-wu",
@@ -168,5 +172,6 @@ export const PROFILES: Profile[] = [
     helpWith: ["Resume Reviews", "Technical Interviews", "Internships", "Mentorship"],
     lookingFor: ["Career Advice"],
     communities: ["Muslim Women in Tech"],
+    company: "Shopify",
   },
 ];
