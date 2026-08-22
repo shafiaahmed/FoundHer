@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Section, TagList } from "@/components/ProfileDetailSections";
-import { getProfileById } from "@/lib/matching";
 import { getAvatarColor, getInitials } from "@/lib/format";
+import { getProfileByIdIncludingReal } from "@/lib/supabase/directory";
 import { ProfileActions } from "./ProfileActions";
 
 export default async function ProfilePage({ params }: PageProps<"/profile/[id]">) {
   const { id } = await params;
-  const profile = getProfileById(id);
+  const profile = await getProfileByIdIncludingReal(id);
 
   if (!profile) {
     notFound();
@@ -49,11 +49,13 @@ export default async function ProfilePage({ params }: PageProps<"/profile/[id]">
           </div>
         </div>
 
-        <p className="mt-6 leading-relaxed text-stone-700">{profile.bio}</p>
+        {profile.bio && <p className="mt-6 leading-relaxed text-stone-700">{profile.bio}</p>}
 
-        <Section title="Experience">
-          <p className="leading-relaxed text-stone-700">{profile.experience}</p>
-        </Section>
+        {profile.experience && (
+          <Section title="Experience">
+            <p className="leading-relaxed text-stone-700">{profile.experience}</p>
+          </Section>
+        )}
 
         <Section title="Tech interests">
           <TagList tags={profile.interests} tone="neutral" />

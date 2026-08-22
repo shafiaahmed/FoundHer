@@ -1,17 +1,9 @@
 import { getCurrentUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
+import { ProfileRow } from "@/lib/profileRow";
 
-export interface ProfileRow {
-  id: string;
-  name: string;
-  university: string;
-  program: string;
-  year: string;
-  interests: string[];
-  help_with: string[];
-  looking_for: string[];
-  communities: string[];
-}
+export type { ProfileRow } from "@/lib/profileRow";
+export { toProfile } from "@/lib/profileRow";
 
 /** Returns the signed-in user's saved onboarding profile, or null if signed out or not yet onboarded. */
 export async function getMyProfile(): Promise<ProfileRow | null> {

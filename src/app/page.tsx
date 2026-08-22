@@ -1,5 +1,6 @@
 import { Hero } from "@/components/Hero";
 import { UseCases } from "@/components/UseCases";
+import { WhyFoundHer } from "@/components/WhyFoundHer";
 import { getMyProfile } from "@/lib/supabase/profile";
 
 export default async function Home() {
@@ -8,6 +9,7 @@ export default async function Home() {
   return (
     <>
       <Hero />
+      <WhyFoundHer />
       <UseCases profile={profile} />
     </>
   );

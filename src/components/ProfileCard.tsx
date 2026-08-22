@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MatchBadge } from "@/components/MatchBadge";
 import { ConnectModal } from "@/components/ConnectModal";
 import { getAvatarColor, getInitials } from "@/lib/format";
+import { createClient } from "@/lib/supabase/client";
+import { findExistingConnection } from "@/lib/supabase/connectionCheck";
 import { useAuthGate } from "@/lib/supabase/useAuthGate";
 import { MatchReason, Profile } from "@/lib/types";
 
@@ -16,7 +18,28 @@ interface ProfileCardProps {
 
 export function ProfileCard({ profile, score, reasons = [] }: ProfileCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [alreadySent, setAlreadySent] = useState(false);
   const requireAuth = useAuthGate();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const existing = await findExistingConnection(supabase, user.id, profile.id);
+      if (!cancelled && existing) setAlreadySent(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile.id]);
 
   return (
     <>
@@ -94,9 +117,13 @@ export function ProfileCard({ profile, score, reasons = [] }: ProfileCardProps) 
           <button
             type="button"
             onClick={() => requireAuth(() => setModalOpen(true))}
-            className="flex-1 rounded-full bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-800"
+            className={`flex-1 rounded-full px-4 py-2.5 text-sm font-semibold transition ${
+              alreadySent
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                : "bg-violet-700 text-white hover:bg-violet-800"
+            }`}
           >
-            Connect
+            {alreadySent ? "Invite to Connect Sent" : "Connect"}
           </button>
         </div>
       </div>
@@ -106,6 +133,7 @@ export function ProfileCard({ profile, score, reasons = [] }: ProfileCardProps) 
         reasons={reasons}
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        onSent={() => setAlreadySent(true)}
       />
     </>
   );

@@ -1,5 +1,4 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { PROFILES } from "@/data/profiles";
 import { MatchReason, MatchResult, MatchTag, Profile } from "@/lib/types";
 
 const MODEL = "gemini-3.6-flash";
@@ -56,7 +55,7 @@ Rank every profile by how well it matches the user's request. For each profile r
 Include all profiles, even low-scoring ones. Return only the structured data.`;
 }
 
-export async function getAiRecommendations(query: string): Promise<MatchResult[]> {
+export async function getAiRecommendations(query: string, profiles: Profile[]): Promise<MatchResult[]> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not configured");
@@ -66,7 +65,7 @@ export async function getAiRecommendations(query: string): Promise<MatchResult[]
 
   const response = await ai.models.generateContent({
     model: MODEL,
-    contents: buildPrompt(query, PROFILES),
+    contents: buildPrompt(query, profiles),
     config: {
       responseMimeType: "application/json",
       responseSchema: RESPONSE_SCHEMA,
@@ -79,7 +78,7 @@ export async function getAiRecommendations(query: string): Promise<MatchResult[]
   }
 
   const parsed = JSON.parse(text) as { matches: AiMatch[] };
-  const profileById = new Map(PROFILES.map((p) => [p.id, p]));
+  const profileById = new Map(profiles.map((p) => [p.id, p]));
 
   const results: MatchResult[] = parsed.matches
     .map((match) => {

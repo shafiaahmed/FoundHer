@@ -15,9 +15,11 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
-create policy "Users can view their own profile"
+-- Any signed-in user can browse everyone else's profile on Discover — this
+-- is a public directory of real users, not private data.
+create policy "Authenticated users can view all profiles"
   on public.profiles for select
-  using (auth.uid() = id);
+  using (auth.role() = 'authenticated');
 
 create policy "Users can insert their own profile"
   on public.profiles for insert
@@ -54,3 +56,10 @@ create policy "Users can create their own connections"
 create policy "Users can remove their own connections"
   on public.connections for delete
   using (auth.uid() = user_id);
+
+-- Required for upsert (sending a request to someone you already reached out
+-- to before) to work — that's an insert-or-update under the hood.
+create policy "Users can update their own connections"
+  on public.connections for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
