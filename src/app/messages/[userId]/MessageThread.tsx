@@ -26,6 +26,17 @@ export function MessageThread({
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  async function markIncomingMessagesRead() {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("messages")
+      .update({ read_at: new Date().toISOString() })
+      .eq("recipient_id", currentUserId)
+      .eq("sender_id", otherUserId)
+      .is("read_at", null);
+    if (!error) window.dispatchEvent(new Event("foundher:messages-read"));
+  }
+
   async function fetchMessages() {
     const supabase = createClient();
     const { data } = await supabase
@@ -38,10 +49,13 @@ export function MessageThread({
       .returns<MessageRow[]>();
 
     if (data) setMessages(data);
+
+    await markIncomingMessagesRead();
   }
 
   // Lightweight polling so a reply shows up without a manual refresh — no realtime subscription needed for this scale.
   useEffect(() => {
+    markIncomingMessagesRead();
     const interval = setInterval(fetchMessages, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -12,6 +12,7 @@ export interface MessageRow {
   recipient_id: string;
   body: string;
   created_at: string;
+  read_at?: string | null;
 }
 
 export async function canMessage(otherUserId: string): Promise<boolean> {
