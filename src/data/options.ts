@@ -1,4 +1,4 @@
-import { Community, HelpCategory, Interest } from "@/lib/types";
+import { Community, HelpCategory, Interest, EventType, EventTag } from "@/lib/types";
 
 export const INTERESTS: Interest[] = [
   "AI/ML",
@@ -32,4 +32,19 @@ export const YEARS_OF_STUDY: string[] = [
   "4th Year",
   "Graduate Student",
   "Recent Graduate",
+];
+
+export const EVENT_TYPES: EventType[] = [
+  "Hackathon",
+  "Study Session",
+  "Networking",
+  "Workshop",
+  "Career Fair",
+];
+
+export const EVENT_TAGS: EventTag[] = [
+  "Women-Only",
+  "Muslim Women",
+  "Students Only",
+  "Virtual",
 ];

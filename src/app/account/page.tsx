@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Section, TagList } from "@/components/ProfileDetailSections";
 import { getCurrentUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
+import { Event } from "@/lib/types";
 
 interface ProfileRow {
   id: string;
@@ -33,6 +34,32 @@ export default async function AccountPage() {
   if (!profile) {
     redirect("/onboarding");
   }
+
+  const { data: myEventsData } = await supabase
+    .from("events")
+    .select("*")
+    .eq("creator_id", user.id)
+    .order("date", { ascending: true });
+
+  const myEvents: Event[] = (myEventsData ?? []).map((event) => ({
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    eventType: event.event_type ?? "Workshop",
+    date: event.date,
+    time: event.time ?? "14:00",
+    location: event.location,
+    university: event.university ?? undefined,
+    creatorId: event.creator_id ?? user.id,
+    creatorName: event.creator_name ?? profile.name,
+    maxAttendees: event.max_attendees ?? undefined,
+    attendeeCount: Number(event.attendee_count ?? 0),
+    attendees: Array.isArray(event.attendees) ? event.attendees : [],
+    tags: Array.isArray(event.tags) ? event.tags : [],
+    isExternal: Boolean(event.is_external ?? false),
+    externalId: event.external_id ?? undefined,
+    url: event.url ?? undefined,
+  }));
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-14">
@@ -78,6 +105,51 @@ export default async function AccountPage() {
         <Section title="Looking for">
           <TagList tags={profile.looking_for} tone="violet" />
         </Section>
+
+        <div className="mt-8 border-t border-stone-100 pt-6">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold text-stone-900">My events</h2>
+            <Link
+              href="/events/create"
+              className="rounded-full bg-violet-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-800"
+            >
+              Create event
+            </Link>
+          </div>
+
+          {myEvents.length > 0 ? (
+            <div className="space-y-3">
+              {myEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="flex items-center justify-between gap-4 rounded-xl border border-stone-200 bg-stone-50 p-4"
+                >
+                  <div>
+                    <p className="font-semibold text-stone-900">{event.title}</p>
+                    <p className="text-sm text-stone-600">
+                      {event.eventType} •{" "}
+                      {new Date(event.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/events/${event.id}`}
+                    className="rounded-full border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-700 transition hover:border-violet-300 hover:text-violet-800"
+                  >
+                    Manage
+                  </Link>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-4 text-stone-600">
+              You haven&apos;t created any events yet.
+            </div>
+          )}
+        </div>
 
         <div className="mt-8 border-t border-stone-100 pt-6">
           <Link
