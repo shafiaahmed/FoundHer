@@ -14,6 +14,9 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<Event | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [attendeeToRemove, setAttendeeToRemove] = useState<{ id: string; name: string } | null>(null);
+  const [isRemovingAttendee, setIsRemovingAttendee] = useState(false);
+  const [removalError, setRemovalError] = useState("");
 
   useEffect(() => {
     async function loadEvent() {
@@ -39,6 +42,15 @@ export default function EventDetailPage() {
     loadEvent();
     loadUser();
   }, [eventId]);
+
+  useEffect(() => {
+    if (!attendeeToRemove) return;
+    const closeOnEscape = (keyboardEvent: KeyboardEvent) => {
+      if (keyboardEvent.key === "Escape" && !isRemovingAttendee) setAttendeeToRemove(null);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [attendeeToRemove, isRemovingAttendee]);
 
   const isCreator = Boolean(event && currentUserId && event.creatorId === currentUserId);
 
@@ -165,25 +177,29 @@ export default function EventDetailPage() {
     } : current);
   };
 
-  const handleRemoveAttendee = async (attendeeId: string, attendeeName: string) => {
-    if (!event) return;
-    if (!window.confirm(`Remove ${attendeeName} from this event?`)) return;
+  const handleRemoveAttendee = async () => {
+    if (!event || !attendeeToRemove) return;
+    setIsRemovingAttendee(true);
+    setRemovalError("");
     const response = await fetch(
-      `/api/events/${encodeURIComponent(event.id)}/attendees/${encodeURIComponent(attendeeId)}`,
+      `/api/events/${encodeURIComponent(event.id)}/attendees/${encodeURIComponent(attendeeToRemove.id)}`,
       { method: "DELETE" }
     );
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      window.alert(result?.error ?? "Unable to remove this attendee.");
+      setRemovalError(result?.error ?? "Unable to remove this attendee.");
+      setIsRemovingAttendee(false);
       return;
     }
     setEvent((current) => current ? {
       ...current,
       foundHerAttendees: current.foundHerAttendees?.filter(
-        (attendee) => attendee.userId !== attendeeId
+        (attendee) => attendee.userId !== attendeeToRemove.id
       ),
       foundHerAttendeeCount: Math.max(0, (current.foundHerAttendeeCount ?? 0) - 1),
     } : current);
+    setIsRemovingAttendee(false);
+    setAttendeeToRemove(null);
   };
 
   if (!event) {
@@ -300,7 +316,7 @@ export default function EventDetailPage() {
                       <Link href={`/profile/${attendee.userId}`} target="_blank" rel="noreferrer" className="font-medium text-stone-900 hover:text-violet-700 hover:underline">
                         {attendee.userName}
                       </Link>
-                      <button type="button" onClick={() => handleRemoveAttendee(attendee.userId, attendee.userName)} className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50">
+                      <button type="button" onClick={() => { setRemovalError(""); setAttendeeToRemove({ id: attendee.userId, name: attendee.userName }); }} className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50">
                         Remove
                       </button>
                     </div>
@@ -417,6 +433,55 @@ export default function EventDetailPage() {
           )}
         </div>
       </div>
+
+      {attendeeToRemove && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm"
+          onClick={() => !isRemovingAttendee && setAttendeeToRemove(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="remove-attendee-title"
+            className="animate-fade-in-up w-full max-w-md rounded-2xl border border-stone-200 bg-white p-6 shadow-xl"
+            onClick={(clickEvent) => clickEvent.stopPropagation()}
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-50 text-rose-700">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true">
+                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 10v6M14 10v6" />
+              </svg>
+            </div>
+            <h2 id="remove-attendee-title" className="mt-4 text-xl font-semibold text-stone-900">
+              Remove attendee?
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-stone-600">
+              Remove <span className="font-semibold text-stone-900">{attendeeToRemove.name}</span> from {event.title}? They will be notified and the attendee count will update.
+            </p>
+            {removalError && (
+              <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{removalError}</p>
+            )}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setAttendeeToRemove(null)}
+                disabled={isRemovingAttendee}
+                autoFocus
+                className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveAttendee}
+                disabled={isRemovingAttendee}
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-wait disabled:opacity-60"
+              >
+                {isRemovingAttendee ? "Removing..." : "Remove attendee"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
