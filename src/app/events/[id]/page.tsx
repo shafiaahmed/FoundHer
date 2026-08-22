@@ -165,6 +165,27 @@ export default function EventDetailPage() {
     } : current);
   };
 
+  const handleRemoveAttendee = async (attendeeId: string, attendeeName: string) => {
+    if (!event) return;
+    if (!window.confirm(`Remove ${attendeeName} from this event?`)) return;
+    const response = await fetch(
+      `/api/events/${encodeURIComponent(event.id)}/attendees/${encodeURIComponent(attendeeId)}`,
+      { method: "DELETE" }
+    );
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      window.alert(result?.error ?? "Unable to remove this attendee.");
+      return;
+    }
+    setEvent((current) => current ? {
+      ...current,
+      foundHerAttendees: current.foundHerAttendees?.filter(
+        (attendee) => attendee.userId !== attendeeId
+      ),
+      foundHerAttendeeCount: Math.max(0, (current.foundHerAttendeeCount ?? 0) - 1),
+    } : current);
+  };
+
   if (!event) {
     return (
       <main className="min-h-screen bg-stone-50">
@@ -240,6 +261,19 @@ export default function EventDetailPage() {
                       <div>
                         <p className="font-medium text-stone-900">{joinRequest.requesterName}</p>
                         <p className="text-xs text-stone-500">Requested {new Date(joinRequest.createdAt).toLocaleDateString()}</p>
+                        <Link
+                          href={`/profile/${joinRequest.requesterId}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-violet-700 hover:text-violet-900 hover:underline"
+                          aria-label={`View ${joinRequest.requesterName}'s profile in a new tab`}
+                        >
+                          View profile
+                          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-3 w-3" aria-hidden="true">
+                            <path d="M11 3h6v6M17 3l-8 8" />
+                            <path d="M15 11v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" />
+                          </svg>
+                        </Link>
                       </div>
                       <div className="flex gap-2">
                         <button type="button" onClick={() => handleRequestDecision(joinRequest.id, "declined")} className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm font-semibold text-stone-700 hover:bg-stone-50">Decline</button>
@@ -259,14 +293,22 @@ export default function EventDetailPage() {
               FoundHer members planning to attend ({event.foundHerAttendeeCount ?? 0})
             </h3>
             {(event.foundHerAttendees?.length ?? 0) > 0 ? (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className={`mt-4 ${isCreator && !event.isExternal ? "space-y-2" : "flex flex-wrap gap-2"}`}>
                 {event.foundHerAttendees?.map((attendee) => (
-                  <span
-                    key={attendee.userId}
-                    className="rounded-full bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-800"
-                  >
-                    {attendee.userName}
-                  </span>
+                  isCreator && !event.isExternal ? (
+                    <div key={attendee.userId} className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 p-3">
+                      <Link href={`/profile/${attendee.userId}`} target="_blank" rel="noreferrer" className="font-medium text-stone-900 hover:text-violet-700 hover:underline">
+                        {attendee.userName}
+                      </Link>
+                      <button type="button" onClick={() => handleRemoveAttendee(attendee.userId, attendee.userName)} className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50">
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <span key={attendee.userId} className="rounded-full bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-800">
+                      {attendee.userName}
+                    </span>
+                  )
                 ))}
               </div>
             ) : (
@@ -325,7 +367,7 @@ export default function EventDetailPage() {
                   <button
                     type="button"
                     onClick={handleJoinRequest}
-                    disabled={event.currentUserJoinRequest?.status === "accepted" || event.currentUserJoinRequest?.status === "declined"}
+                    disabled={event.currentUserJoinRequest?.status === "accepted" || event.currentUserJoinRequest?.status === "declined" || event.currentUserJoinRequest?.status === "removed"}
                     className="w-full rounded-lg bg-violet-600 px-6 py-3 font-bold text-white transition-colors hover:bg-violet-700 disabled:bg-stone-200 disabled:text-stone-500"
                   >
                     {event.currentUserJoinRequest?.status === "pending"
@@ -334,6 +376,8 @@ export default function EventDetailPage() {
                         ? "Accepted ✓"
                         : event.currentUserJoinRequest?.status === "declined"
                           ? "Request Declined"
+                          : event.currentUserJoinRequest?.status === "removed"
+                            ? "Removed by Organizer"
                           : "Request to Join"}
                   </button>
                 )}

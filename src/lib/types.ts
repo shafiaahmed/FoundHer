@@ -104,7 +104,7 @@ export interface Event {
   currentUserIsOrganizer?: boolean;
   currentUserJoinRequest?: {
     id: string;
-    status: "pending" | "accepted" | "declined" | "cancelled";
+    status: "pending" | "accepted" | "declined" | "cancelled" | "removed";
   };
   pendingJoinRequests?: {
     id: string;

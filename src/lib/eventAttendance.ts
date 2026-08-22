@@ -15,7 +15,7 @@ type JoinRequestRow = {
   requester_id: string;
   requester_name: string;
   organizer_id: string;
-  status: "pending" | "accepted" | "declined" | "cancelled";
+  status: "pending" | "accepted" | "declined" | "cancelled" | "removed";
   created_at: string;
 };
 

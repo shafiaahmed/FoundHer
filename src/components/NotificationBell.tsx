@@ -1,17 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
+  const pathname = usePathname();
 
-  useEffect(() => {
-    fetch("/api/notifications")
+  const refreshUnreadCount = useCallback(() => {
+    fetch("/api/notifications", { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => setUnreadCount(data?.unreadCount ?? 0))
       .catch(() => setUnreadCount(0));
   }, []);
+
+  useEffect(() => {
+    refreshUnreadCount();
+  }, [pathname, refreshUnreadCount]);
+
+  useEffect(() => {
+    const handleNotificationsRead = () => setUnreadCount(0);
+    window.addEventListener("focus", refreshUnreadCount);
+    window.addEventListener("foundher:notifications-read", handleNotificationsRead);
+    return () => {
+      window.removeEventListener("focus", refreshUnreadCount);
+      window.removeEventListener("foundher:notifications-read", handleNotificationsRead);
+    };
+  }, [refreshUnreadCount]);
 
   return (
     <Link
@@ -24,9 +40,10 @@ export function NotificationBell() {
         <path d="M10 21h4" />
       </svg>
       {unreadCount > 0 && (
-        <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-rose-600 px-1 text-center text-[10px] font-bold leading-4 text-white">
-          {unreadCount > 9 ? "9+" : unreadCount}
-        </span>
+        <span
+          className="absolute right-1 top-1 h-2 w-2 rounded-full bg-violet-600 ring-2 ring-[#faf8f6]"
+          aria-hidden="true"
+        />
       )}
     </Link>
   );

@@ -22,7 +22,14 @@ export default function NotificationsPage() {
       if (response.ok) {
         const data = await response.json();
         setNotifications(data.notifications ?? []);
-        await fetch("/api/notifications", { method: "PATCH" });
+        const markReadResponse = await fetch("/api/notifications", { method: "PATCH" });
+        if (markReadResponse.ok) {
+          const readAt = new Date().toISOString();
+          setNotifications((current) =>
+            current.map((notification) => ({ ...notification, read_at: notification.read_at ?? readAt }))
+          );
+          window.dispatchEvent(new Event("foundher:notifications-read"));
+        }
       }
       setLoading(false);
     }
