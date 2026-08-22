@@ -26,6 +26,12 @@ export async function Navbar() {
               >
                 My Profile
               </Link>
+              <Link
+                href="/connections"
+                className="rounded-full px-4 py-2 text-stone-600 transition hover:bg-violet-50 hover:text-violet-800"
+              >
+                My Connections
+              </Link>
               <LogoutButton />
             </>
           ) : (

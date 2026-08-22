@@ -2,19 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Section, TagList } from "@/components/ProfileDetailSections";
 import { getCurrentUser } from "@/lib/supabase/auth";
-import { createClient } from "@/lib/supabase/server";
-
-interface ProfileRow {
-  id: string;
-  name: string;
-  university: string;
-  program: string;
-  year: string;
-  interests: string[];
-  help_with: string[];
-  looking_for: string[];
-  communities: string[];
-}
+import { getMyProfile } from "@/lib/supabase/profile";
 
 export default async function AccountPage() {
   const user = await getCurrentUser();
@@ -23,12 +11,7 @@ export default async function AccountPage() {
     redirect("/login?next=/account");
   }
 
-  const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single<ProfileRow>();
+  const profile = await getMyProfile();
 
   if (!profile) {
     redirect("/onboarding");
@@ -79,12 +62,18 @@ export default async function AccountPage() {
           <TagList tags={profile.looking_for} tone="violet" />
         </Section>
 
-        <div className="mt-8 border-t border-stone-100 pt-6">
+        <div className="mt-8 flex flex-wrap gap-3 border-t border-stone-100 pt-6">
           <Link
             href="/discover"
             className="inline-block rounded-full bg-violet-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-800"
           >
             Go to Discover
+          </Link>
+          <Link
+            href="/connections"
+            className="inline-block rounded-full border border-stone-300 px-6 py-3 text-sm font-semibold text-stone-700 transition hover:border-violet-300 hover:text-violet-800"
+          >
+            My Connections
           </Link>
         </div>
       </div>

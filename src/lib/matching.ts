@@ -78,6 +78,30 @@ function buildReason(tag: MatchTag, profile: Profile): MatchReason | null {
   return null;
 }
 
+/**
+ * When only one query tag matched, every profile with that tag reads
+ * identically ("Can help you with Mentorship"). Pad with a couple of
+ * distinguishing reasons pulled from the profile's other attributes so
+ * cards don't all look the same under the keyword-matcher fallback.
+ */
+function bonusReasons(profile: Profile, exclude: Set<MatchTag>, limit: number): MatchReason[] {
+  const bonuses: MatchReason[] = [];
+
+  for (const tag of profile.helpWith) {
+    if (bonuses.length >= limit) break;
+    if (exclude.has(tag)) continue;
+    bonuses.push({ tag, text: `Also helps with ${tag}`, clause: `also help with ${tag}` });
+  }
+
+  for (const tag of profile.interests) {
+    if (bonuses.length >= limit) break;
+    if (exclude.has(tag)) continue;
+    bonuses.push({ tag, text: `Also into ${tag}`, clause: `are also into ${tag}` });
+  }
+
+  return bonuses;
+}
+
 function scoreProfile(profile: Profile, queryTags: MatchTag[]): MatchResult {
   if (queryTags.length === 0) {
     return { profile, score: baselineScore(profile), reasons: [] };
@@ -99,6 +123,11 @@ function scoreProfile(profile: Profile, queryTags: MatchTag[]): MatchResult {
 
     const reason = buildReason(tag, profile);
     if (reason) reasons.push(reason);
+  }
+
+  if (reasons.length > 0 && reasons.length < 2) {
+    const existingTags = new Set(reasons.map((r) => r.tag));
+    reasons.push(...bonusReasons(profile, existingTags, 2 - reasons.length));
   }
 
   return { profile, score: Math.min(score, 99), reasons };
