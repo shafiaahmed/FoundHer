@@ -26,7 +26,7 @@ export async function attachFoundHerAttendance(events: Event[]): Promise<Event[]
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return events;
 
-  const [{ data, error }, { data: requestData }] = await Promise.all([
+  const [{ data }, { data: requestData }] = await Promise.all([
     supabase
     .from("event_attendance")
     .select("event_key,user_id,display_name,status,visibility")
@@ -38,8 +38,7 @@ export async function attachFoundHerAttendance(events: Event[]): Promise<Event[]
       .in("event_id", events.map((event) => event.id)),
   ]);
 
-  if (error || !data) return events;
-  const rows = data as AttendanceRow[];
+  const rows = (data ?? []) as AttendanceRow[];
   const requests = (requestData ?? []) as JoinRequestRow[];
 
   return events.map((event) => {
@@ -56,6 +55,7 @@ export async function attachFoundHerAttendance(events: Event[]): Promise<Event[]
         userName: row.display_name,
       })),
       currentUserGoing: attendance.some((row) => row.user_id === user.id),
+      currentUserIsOrganizer: !event.isExternal && event.creatorId === user.id,
       currentUserJoinRequest: requests
         .filter((request) => request.event_id === event.id && request.requester_id === user.id)
         .map((request) => ({ id: request.id, status: request.status }))[0],

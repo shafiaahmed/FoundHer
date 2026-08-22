@@ -101,6 +101,7 @@ export interface Event {
   foundHerAttendeeCount?: number;
   foundHerAttendees?: { userId: string; userName: string }[];
   currentUserGoing?: boolean;
+  currentUserIsOrganizer?: boolean;
   currentUserJoinRequest?: {
     id: string;
     status: "pending" | "accepted" | "declined" | "cancelled";
