@@ -123,13 +123,13 @@ export default function EventCard({ event, score, onRsvp, onJoinRequest }: Event
                   <button
                     type="button"
                     onClick={() => onJoinRequest?.(event)}
-                    disabled={event.currentUserIsOrganizer || event.currentUserJoinRequest?.status === "accepted" || event.currentUserJoinRequest?.status === "declined" || event.currentUserJoinRequest?.status === "removed"}
+                    disabled={event.currentUserIsOrganizer || event.currentUserJoinRequest?.status === "accepted" || event.currentUserJoinRequest?.status === "declined"}
                     className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors disabled:cursor-default ${
                       event.currentUserIsOrganizer
                         ? "border border-stone-200 bg-stone-100 text-stone-400"
                         : event.currentUserJoinRequest?.status === "accepted"
                           ? "bg-emerald-100 text-emerald-800"
-                          : event.currentUserJoinRequest?.status === "declined" || event.currentUserJoinRequest?.status === "removed"
+                          : event.currentUserJoinRequest?.status === "declined"
                             ? "bg-stone-100 text-stone-500"
                             : event.currentUserJoinRequest?.status === "pending"
                               ? "border border-violet-300 bg-violet-50 text-violet-800 hover:bg-violet-100"
@@ -145,7 +145,7 @@ export default function EventCard({ event, score, onRsvp, onJoinRequest }: Event
                           : event.currentUserJoinRequest?.status === "declined"
                             ? "Request Declined"
                             : event.currentUserJoinRequest?.status === "removed"
-                              ? "Removed by Organizer"
+                              ? "Request to Join Again"
                             : "Request to Join"}
                   </button>
                   {event.currentUserIsOrganizer && (

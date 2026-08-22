@@ -383,7 +383,7 @@ export default function EventDetailPage() {
                   <button
                     type="button"
                     onClick={handleJoinRequest}
-                    disabled={event.currentUserJoinRequest?.status === "accepted" || event.currentUserJoinRequest?.status === "declined" || event.currentUserJoinRequest?.status === "removed"}
+                    disabled={event.currentUserJoinRequest?.status === "accepted" || event.currentUserJoinRequest?.status === "declined"}
                     className="w-full rounded-lg bg-violet-600 px-6 py-3 font-bold text-white transition-colors hover:bg-violet-700 disabled:bg-stone-200 disabled:text-stone-500"
                   >
                     {event.currentUserJoinRequest?.status === "pending"
@@ -393,7 +393,7 @@ export default function EventDetailPage() {
                         : event.currentUserJoinRequest?.status === "declined"
                           ? "Request Declined"
                           : event.currentUserJoinRequest?.status === "removed"
-                            ? "Removed by Organizer"
+                            ? "Request to Join Again"
                           : "Request to Join"}
                   </button>
                 )}

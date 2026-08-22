@@ -22,6 +22,21 @@ export async function POST(
       return NextResponse.json({ error: "You already organize this event" }, { status: 400 });
     }
 
+    const { data: existingRequest } = await supabase
+      .from("event_join_requests")
+      .select("id,status")
+      .eq("event_id", String(event.id))
+      .eq("requester_id", user.id)
+      .maybeSingle();
+
+    if (existingRequest?.status === "removed") {
+      const { data: resubmitted, error: resubmitError } = await supabase
+        .rpc("resubmit_removed_join_request", { p_request_id: existingRequest.id });
+      if (resubmitError) throw resubmitError;
+      const requestResult = Array.isArray(resubmitted) ? resubmitted[0] : resubmitted;
+      return NextResponse.json({ request: requestResult });
+    }
+
     const { data, error } = await supabase
       .from("event_join_requests")
       .insert({
