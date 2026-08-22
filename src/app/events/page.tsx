@@ -108,6 +108,33 @@ export default function EventsPage() {
     );
   };
 
+  const handleJoinRequest = async (event: Event) => {
+    const pendingRequest = event.currentUserJoinRequest?.status === "pending"
+      ? event.currentUserJoinRequest
+      : null;
+    const response = await fetch(`/api/events/${encodeURIComponent(event.id)}/join-requests`, {
+      method: pendingRequest ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: pendingRequest ? JSON.stringify({ requestId: pendingRequest.id }) : undefined,
+    });
+    if (response.status === 401) {
+      router.push(`/login?next=${encodeURIComponent("/events")}`);
+      return;
+    }
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      window.alert(result?.error ?? "Unable to update your join request.");
+      return;
+    }
+    setAllEvents((events) =>
+      events.map((item) =>
+        item.id === event.id
+          ? { ...item, currentUserJoinRequest: pendingRequest ? undefined : result.request }
+          : item
+      )
+    );
+  };
+
   const hasActiveFilters = searchQuery || selectedTypes.length > 0 || selectedTags.length > 0;
 
   return (
@@ -202,7 +229,12 @@ export default function EventsPage() {
                 </p>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {filteredEvents.map((event) => (
-                    <EventCard key={event.id} event={event} onRsvp={handleRsvp} />
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      onRsvp={handleRsvp}
+                      onJoinRequest={handleJoinRequest}
+                    />
                   ))}
                 </div>
               </>

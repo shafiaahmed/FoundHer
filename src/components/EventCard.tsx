@@ -8,9 +8,10 @@ interface EventCardProps {
   event: Event;
   score?: number;
   onRsvp?: (event: Event) => void;
+  onJoinRequest?: (event: Event) => void;
 }
 
-export default function EventCard({ event, score, onRsvp }: EventCardProps) {
+export default function EventCard({ event, score, onRsvp, onJoinRequest }: EventCardProps) {
   const eventDate = new Date(event.date);
   const today = new Date();
   const isPast = eventDate < today;
@@ -105,17 +106,42 @@ export default function EventCard({ event, score, onRsvp }: EventCardProps) {
           </span>
           {!isPast && (
             <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => onRsvp?.(event)}
-                className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${
-                  event.currentUserGoing
-                    ? "border border-violet-300 bg-violet-50 text-violet-800 hover:bg-violet-100"
-                    : "bg-violet-600 text-white hover:bg-violet-700"
-                }`}
-              >
-                {event.currentUserGoing ? "Shared: I’m Going ✓" : "Share I’m Going"}
-              </button>
+              {event.isExternal ? (
+                <button
+                  type="button"
+                  onClick={() => onRsvp?.(event)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${
+                    event.currentUserGoing
+                      ? "border border-violet-300 bg-violet-50 text-violet-800 hover:bg-violet-100"
+                      : "bg-violet-600 text-white hover:bg-violet-700"
+                  }`}
+                >
+                  {event.currentUserGoing ? "Shared: I’m Going ✓" : "Share I’m Going"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onJoinRequest?.(event)}
+                  disabled={event.currentUserJoinRequest?.status === "accepted" || event.currentUserJoinRequest?.status === "declined"}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors disabled:cursor-default ${
+                    event.currentUserJoinRequest?.status === "accepted"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : event.currentUserJoinRequest?.status === "declined"
+                        ? "bg-stone-100 text-stone-500"
+                        : event.currentUserJoinRequest?.status === "pending"
+                          ? "border border-violet-300 bg-violet-50 text-violet-800 hover:bg-violet-100"
+                          : "bg-violet-600 text-white hover:bg-violet-700"
+                  }`}
+                >
+                  {event.currentUserJoinRequest?.status === "pending"
+                    ? "Request Pending · Cancel"
+                    : event.currentUserJoinRequest?.status === "accepted"
+                      ? "Accepted ✓"
+                      : event.currentUserJoinRequest?.status === "declined"
+                        ? "Request Declined"
+                        : "Request to Join"}
+                </button>
+              )}
           {event.isExternal && event.url && (
             <a
               href={event.url}

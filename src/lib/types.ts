@@ -98,6 +98,16 @@ export interface Event {
   foundHerAttendeeCount?: number;
   foundHerAttendees?: { userId: string; userName: string }[];
   currentUserGoing?: boolean;
+  currentUserJoinRequest?: {
+    id: string;
+    status: "pending" | "accepted" | "declined" | "cancelled";
+  };
+  pendingJoinRequests?: {
+    id: string;
+    requesterId: string;
+    requesterName: string;
+    createdAt: string;
+  }[];
 }
 
 export interface EventRecommendation {

@@ -9,6 +9,16 @@ type AttendanceRow = {
   visibility: string;
 };
 
+type JoinRequestRow = {
+  id: string;
+  event_id: string;
+  requester_id: string;
+  requester_name: string;
+  organizer_id: string;
+  status: "pending" | "accepted" | "declined" | "cancelled";
+  created_at: string;
+};
+
 export async function attachFoundHerAttendance(events: Event[]): Promise<Event[]> {
   if (events.length === 0) return events;
 
@@ -16,14 +26,21 @@ export async function attachFoundHerAttendance(events: Event[]): Promise<Event[]
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return events;
 
-  const { data, error } = await supabase
+  const [{ data, error }, { data: requestData }] = await Promise.all([
+    supabase
     .from("event_attendance")
     .select("event_key,user_id,display_name,status,visibility")
     .in("event_key", events.map((event) => event.id))
-    .in("status", ["going", "attended"]);
+    .in("status", ["going", "attended"]),
+    supabase
+      .from("event_join_requests")
+      .select("id,event_id,requester_id,requester_name,organizer_id,status,created_at")
+      .in("event_id", events.map((event) => event.id)),
+  ]);
 
   if (error || !data) return events;
   const rows = data as AttendanceRow[];
+  const requests = (requestData ?? []) as JoinRequestRow[];
 
   return events.map((event) => {
     const attendance = rows.filter((row) => row.event_key === event.id);
@@ -39,6 +56,22 @@ export async function attachFoundHerAttendance(events: Event[]): Promise<Event[]
         userName: row.display_name,
       })),
       currentUserGoing: attendance.some((row) => row.user_id === user.id),
+      currentUserJoinRequest: requests
+        .filter((request) => request.event_id === event.id && request.requester_id === user.id)
+        .map((request) => ({ id: request.id, status: request.status }))[0],
+      pendingJoinRequests: requests
+        .filter(
+          (request) =>
+            request.event_id === event.id &&
+            request.organizer_id === user.id &&
+            request.status === "pending"
+        )
+        .map((request) => ({
+          id: request.id,
+          requesterId: request.requester_id,
+          requesterName: request.requester_name,
+          createdAt: request.created_at,
+        })),
     };
   });
 }

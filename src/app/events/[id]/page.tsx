@@ -117,6 +117,54 @@ export default function EventDetailPage() {
     });
   };
 
+  const handleJoinRequest = async () => {
+    if (!event) return;
+    const pendingRequest = event.currentUserJoinRequest?.status === "pending"
+      ? event.currentUserJoinRequest
+      : null;
+    const response = await fetch(`/api/events/${encodeURIComponent(event.id)}/join-requests`, {
+      method: pendingRequest ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: pendingRequest ? JSON.stringify({ requestId: pendingRequest.id }) : undefined,
+    });
+    if (response.status === 401) {
+      router.push(`/login?next=${encodeURIComponent(`/events/${event.id}`)}`);
+      return;
+    }
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      window.alert(result?.error ?? "Unable to update your join request.");
+      return;
+    }
+    setEvent((current) => current ? {
+      ...current,
+      currentUserJoinRequest: pendingRequest ? undefined : result.request,
+    } : current);
+  };
+
+  const handleRequestDecision = async (requestId: string, decision: "accepted" | "declined") => {
+    if (!event) return;
+    const response = await fetch(
+      `/api/events/${encodeURIComponent(event.id)}/join-requests/${requestId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision }),
+      }
+    );
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      window.alert(result?.error ?? "Unable to respond to this request.");
+      return;
+    }
+    setEvent((current) => current ? {
+      ...current,
+      pendingJoinRequests: current.pendingJoinRequests?.filter((item) => item.id !== requestId),
+      foundHerAttendeeCount:
+        (current.foundHerAttendeeCount ?? 0) + (decision === "accepted" ? 1 : 0),
+    } : current);
+  };
+
   if (!event) {
     return (
       <main className="min-h-screen bg-stone-50">
@@ -180,6 +228,32 @@ export default function EventDetailPage() {
             <p className="whitespace-pre-wrap text-stone-700">{event.description}</p>
           </div>
 
+          {isCreator && !event.isExternal && (
+            <div className="mt-8 border-t border-stone-200 pt-8">
+              <h3 className="font-semibold text-stone-900">
+                Pending join requests ({event.pendingJoinRequests?.length ?? 0})
+              </h3>
+              {(event.pendingJoinRequests?.length ?? 0) > 0 ? (
+                <div className="mt-4 space-y-3">
+                  {event.pendingJoinRequests?.map((joinRequest) => (
+                    <div key={joinRequest.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-stone-200 p-4">
+                      <div>
+                        <p className="font-medium text-stone-900">{joinRequest.requesterName}</p>
+                        <p className="text-xs text-stone-500">Requested {new Date(joinRequest.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => handleRequestDecision(joinRequest.id, "declined")} className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm font-semibold text-stone-700 hover:bg-stone-50">Decline</button>
+                        <button type="button" onClick={() => handleRequestDecision(joinRequest.id, "accepted")} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700">Accept</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-stone-500">No pending requests.</p>
+              )}
+            </div>
+          )}
+
           <div className="mt-8 border-t border-stone-200 pt-8">
             <h3 className="font-semibold text-stone-900">
               FoundHer members planning to attend ({event.foundHerAttendeeCount ?? 0})
@@ -239,13 +313,30 @@ export default function EventDetailPage() {
           {!isPast && !isCreator && (
             <div className="mt-8 border-t border-stone-200 pt-8">
               <div className="grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={handleAttendance}
-                  className="w-full rounded-lg bg-violet-600 px-6 py-3 font-bold text-white transition-colors hover:bg-violet-700"
-                >
-                  {event.currentUserGoing ? "Shared: I’m Going ✓" : "Share I’m Going"}
-                </button>
+                {event.isExternal ? (
+                  <button
+                    type="button"
+                    onClick={handleAttendance}
+                    className="w-full rounded-lg bg-violet-600 px-6 py-3 font-bold text-white transition-colors hover:bg-violet-700"
+                  >
+                    {event.currentUserGoing ? "Shared: I’m Going ✓" : "Share I’m Going"}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleJoinRequest}
+                    disabled={event.currentUserJoinRequest?.status === "accepted" || event.currentUserJoinRequest?.status === "declined"}
+                    className="w-full rounded-lg bg-violet-600 px-6 py-3 font-bold text-white transition-colors hover:bg-violet-700 disabled:bg-stone-200 disabled:text-stone-500"
+                  >
+                    {event.currentUserJoinRequest?.status === "pending"
+                      ? "Request Pending · Cancel"
+                      : event.currentUserJoinRequest?.status === "accepted"
+                        ? "Accepted ✓"
+                        : event.currentUserJoinRequest?.status === "declined"
+                          ? "Request Declined"
+                          : "Request to Join"}
+                  </button>
+                )}
                 {event.isExternal && event.url && (
                   <a
                     href={event.url}
