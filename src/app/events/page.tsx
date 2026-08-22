@@ -1,0 +1,230 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Event, EventType, EventTag } from "@/lib/types";
+import EventCard from "@/components/EventCard";
+import EventFilterChips from "@/components/EventFilterChips";
+import { filterEvents } from "@/lib/eventMatching";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+export default function EventsPage() {
+  const router = useRouter();
+  const [allEvents, setAllEvents] = useState<Event[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationQuery, setLocationQuery] = useState("Toronto");
+  const [selectedTypes, setSelectedTypes] = useState<EventType[]>([]);
+  const [selectedTags, setSelectedTags] = useState<EventTag[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadEvents() {
+      setIsLoading(true);
+
+      try {
+        const params = new URLSearchParams();
+        if (searchQuery.trim()) params.set("q", searchQuery.trim());
+        if (locationQuery.trim()) params.set("location", locationQuery.trim());
+
+        const response = await fetch(`/api/events?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("Failed to load events");
+        const data = await response.json();
+        const events = Array.isArray(data.events) ? data.events : [];
+        setAllEvents(events);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error("Failed to load events:", error);
+        setAllEvents([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    const timeout = window.setTimeout(loadEvents, 400);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [searchQuery, locationQuery]);
+
+  const filteredEvents = useMemo(
+    () =>
+      filterEvents(allEvents, {
+        eventTypes: selectedTypes,
+        tags: selectedTags.length > 0 ? selectedTags : undefined,
+        searchQuery,
+      }),
+    [searchQuery, selectedTypes, selectedTags, allEvents]
+  );
+
+  const handleRsvp = async (event: Event) => {
+    const nextGoing = !event.currentUserGoing;
+    const response = await fetch(`/api/events/${encodeURIComponent(event.id)}/rsvp`, {
+      method: nextGoing ? "POST" : "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: nextGoing
+        ? JSON.stringify({
+            visibility: "members",
+            event: {
+              externalId: event.externalId,
+              title: event.title,
+              url: event.url,
+              date: event.date,
+              location: event.location,
+              isExternal: event.isExternal,
+            },
+          })
+        : undefined,
+    });
+
+    if (response.status === 401) {
+      router.push(`/login?next=${encodeURIComponent("/events")}`);
+      return;
+    }
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      window.alert(result?.error ?? "Unable to update your attendance right now.");
+      return;
+    }
+
+    setAllEvents((events) =>
+      events.map((item) =>
+        item.id === event.id
+          ? {
+              ...item,
+              currentUserGoing: nextGoing,
+              foundHerAttendeeCount: Math.max(
+                0,
+                (item.foundHerAttendeeCount ?? 0) + (nextGoing ? 1 : -1)
+              ),
+            }
+          : item
+      )
+    );
+  };
+
+  const hasActiveFilters = searchQuery || selectedTypes.length > 0 || selectedTags.length > 0;
+
+  return (
+    <main className="min-h-screen bg-stone-50">
+      {/* Header */}
+      <div className="border-b border-stone-200 bg-white px-6 py-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-stone-900">Events</h1>
+              <p className="mt-2 text-stone-600">
+                Discover hackathons, workshops, networking events, and more
+              </p>
+            </div>
+            <Link
+              href="/events/create"
+              className="rounded-lg bg-violet-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-violet-700"
+            >
+              Create Event
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <div className="flex gap-8">
+          {/* Sidebar Filters */}
+          <aside className="w-64 flex-shrink-0">
+            <div className="sticky top-20 space-y-4">
+              {/* Search */}
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-stone-700">
+                  Search Events
+                </label>
+                <input
+                  type="text"
+                  placeholder="Hackathon, workshop, networking..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-lg border border-stone-200 px-4 py-2 text-sm placeholder-stone-400 focus:border-violet-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-stone-700">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  placeholder="Toronto, New York, online..."
+                  value={locationQuery}
+                  onChange={(e) => setLocationQuery(e.target.value)}
+                  className="w-full rounded-lg border border-stone-200 px-4 py-2 text-sm placeholder-stone-400 focus:border-violet-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Filters */}
+              <EventFilterChips
+                selectedTypes={selectedTypes}
+                selectedTags={selectedTags}
+                onTypeChange={setSelectedTypes}
+                onTagChange={setSelectedTags}
+              />
+
+              {/* Clear Filters */}
+              {(hasActiveFilters || locationQuery) && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setLocationQuery("");
+                    setSelectedTypes([]);
+                    setSelectedTags([]);
+                  }}
+                  className="w-full rounded-lg border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-700 transition-colors hover:bg-stone-100"
+                >
+                  Clear All Filters
+                </button>
+              )}
+            </div>
+          </aside>
+
+          {/* Main Events Grid */}
+          <div className="flex-1">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <p className="text-stone-600">Loading events...</p>
+              </div>
+            ) : filteredEvents.length > 0 ? (
+              <>
+                <p className="mb-6 text-sm text-stone-600">
+                  {filteredEvents.length} event{filteredEvents.length !== 1 ? "s" : ""} found
+                </p>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredEvents.map((event) => (
+                    <EventCard key={event.id} event={event} onRsvp={handleRsvp} />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-stone-200 bg-white py-12">
+                <p className="text-stone-600">No events found matching your criteria</p>
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setLocationQuery("");
+                    setSelectedTypes([]);
+                    setSelectedTags([]);
+                  }}
+                  className="mt-4 rounded-lg bg-violet-100 px-4 py-2 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-200"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}

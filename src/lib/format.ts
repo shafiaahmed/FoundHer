@@ -19,3 +19,30 @@ export function getAvatarColor(seed: string): string {
   const hash = Array.from(seed).reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
 }
+
+/**
+ * Format date string (YYYY-MM-DD) to readable format
+ * E.g., "2026-09-15" → "Sep 15, 2026"
+ */
+export function formatEventDate(dateString: string): string {
+  const date = new Date(dateString + "T00:00:00");
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+/**
+ * Format time string (HH:MM) to readable format
+ * E.g., "14:30" → "2:30 PM"
+ */
+export function formatEventTime(timeString: string): string {
+  const [hours, minutes] = timeString.split(":").map(Number);
+  const date = new Date(2000, 0, 1, hours, minutes);
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}

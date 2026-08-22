@@ -60,3 +60,58 @@ export interface OnboardingData {
   helpWith: HelpCategory[];
   lookingFor: MatchTag[];
 }
+
+export type EventType =
+  | "Hackathon"
+  | "Study Session"
+  | "Networking"
+  | "Workshop"
+  | "Career Fair"
+  | "Panel Discussion";
+
+export type EventTag =
+  | "Women-Only"
+  | "Muslim Women"
+  | "Students Only"
+  | "Beginners Welcome"
+  | "Remote-Friendly"
+  | "Virtual";
+
+export interface Event {
+  id: string;
+  title: string;
+  description: string;
+  eventType: EventType;
+  date: string; // ISO date string
+  time: string; // HH:MM format
+  location: string;
+  university?: string;
+  creatorId: string;
+  creatorName: string;
+  maxAttendees?: number;
+  attendeeCount: number;
+  attendees: { userId: string; userName: string; rsvpDate: string }[];
+  tags: EventTag[];
+  isExternal: boolean; // true if from Eventbrite
+  externalId?: string; // Eventbrite event ID
+  url?: string; // External event URL
+  foundHerAttendeeCount?: number;
+  foundHerAttendees?: { userId: string; userName: string }[];
+  currentUserGoing?: boolean;
+}
+
+export interface EventRecommendation {
+  event: Event;
+  score: number;
+  reason: string;
+}
+
+export interface EventFilter {
+  eventType?: EventType;
+  eventTypes?: EventType[];
+  tags?: EventTag[];
+  location?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  searchQuery?: string;
+}
