@@ -29,7 +29,7 @@ export async function POST(
       .eq("requester_id", user.id)
       .maybeSingle();
 
-    if (existingRequest?.status === "removed") {
+    if (existingRequest?.status === "removed" || existingRequest?.status === "declined") {
       const { data: resubmitted, error: resubmitError } = await supabase
         .rpc("resubmit_removed_join_request", { p_request_id: existingRequest.id });
       if (resubmitError) throw resubmitError;

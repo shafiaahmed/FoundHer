@@ -123,15 +123,13 @@ export default function EventCard({ event, score, onRsvp, onJoinRequest }: Event
                   <button
                     type="button"
                     onClick={() => onJoinRequest?.(event)}
-                    disabled={event.currentUserIsOrganizer || event.currentUserJoinRequest?.status === "accepted" || event.currentUserJoinRequest?.status === "declined"}
+                    disabled={event.currentUserIsOrganizer || event.currentUserJoinRequest?.status === "accepted"}
                     className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors disabled:cursor-default ${
                       event.currentUserIsOrganizer
                         ? "border border-stone-200 bg-stone-100 text-stone-400"
                         : event.currentUserJoinRequest?.status === "accepted"
                           ? "bg-emerald-100 text-emerald-800"
-                          : event.currentUserJoinRequest?.status === "declined"
-                            ? "bg-stone-100 text-stone-500"
-                            : event.currentUserJoinRequest?.status === "pending"
+                          : event.currentUserJoinRequest?.status === "pending"
                               ? "border border-violet-300 bg-violet-50 text-violet-800 hover:bg-violet-100"
                               : "bg-violet-600 text-white hover:bg-violet-700"
                     }`}
@@ -143,7 +141,7 @@ export default function EventCard({ event, score, onRsvp, onJoinRequest }: Event
                         : event.currentUserJoinRequest?.status === "accepted"
                           ? "Accepted ✓"
                           : event.currentUserJoinRequest?.status === "declined"
-                            ? "Request Declined"
+                            ? "Request to Join Again"
                             : event.currentUserJoinRequest?.status === "removed"
                               ? "Request to Join Again"
                             : "Request to Join"}

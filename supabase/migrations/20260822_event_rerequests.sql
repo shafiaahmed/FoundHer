@@ -8,7 +8,7 @@ declare
   capacity_limit integer;
   accepted_count integer;
 begin
-  if old.status = 'removed' and new.status = 'pending' then
+  if old.status in ('removed', 'declined') and new.status = 'pending' then
     new.responded_at := null;
     new.created_at := now();
     insert into public.notifications (user_id, type, title, message, event_id, join_request_id)
@@ -88,7 +88,7 @@ begin
       set status = 'pending'
       where request.id = p_request_id
         and request.requester_id = auth.uid()
-        and request.status = 'removed'
+        and request.status in ('removed', 'declined')
       returning request.id, request.status;
 end;
 $$;
