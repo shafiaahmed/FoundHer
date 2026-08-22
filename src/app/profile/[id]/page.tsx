@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Section, TagList } from "@/components/ProfileDetailSections";
 import { getProfileById } from "@/lib/matching";
 import { getAvatarColor, getInitials } from "@/lib/format";
 import { ProfileActions } from "./ProfileActions";
@@ -70,33 +71,6 @@ export default async function ProfilePage({ params }: PageProps<"/profile/[id]">
           <ProfileActions profile={profile} />
         </div>
       </div>
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="mt-6">
-      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">{title}</h2>
-      {children}
-    </div>
-  );
-}
-
-const TONE_CLASSES = {
-  neutral: "bg-stone-100 text-stone-600",
-  amber: "bg-amber-50 text-amber-700",
-  violet: "bg-violet-50 text-violet-700",
-};
-
-function TagList({ tags, tone }: { tags: string[]; tone: keyof typeof TONE_CLASSES }) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {tags.map((tag) => (
-        <span key={tag} className={`rounded-full px-2.5 py-1 text-xs font-medium ${TONE_CLASSES[tone]}`}>
-          {tag}
-        </span>
-      ))}
     </div>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ProfileCard } from "@/components/ProfileCard";
 import { getRecommendations } from "@/lib/matching";
+import { MatchResult } from "@/lib/types";
 
 const SUGGESTIONS = [
   "I have my first technical interview next week and want to practice LeetCode",
@@ -11,11 +12,45 @@ const SUGGESTIONS = [
   "I'd like to meet other Muslim women in tech",
 ];
 
+type MatchSource = "keyword" | "ai";
+
 export default function DiscoverPage() {
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
+  const [results, setResults] = useState<MatchResult[]>(() => getRecommendations(""));
+  const [source, setSource] = useState<MatchSource>("keyword");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiUnavailable, setAiUnavailable] = useState(false);
 
-  const results = useMemo(() => getRecommendations(submittedQuery), [submittedQuery]);
+  async function runSearch(searchQuery: string) {
+    setSubmittedQuery(searchQuery);
+    setAiUnavailable(false);
+
+    // Instant local results so the UI never feels stuck waiting on the network.
+    setResults(getRecommendations(searchQuery));
+    setSource("keyword");
+
+    if (!searchQuery.trim()) return;
+
+    setAiLoading(true);
+    try {
+      const response = await fetch("/api/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+
+      if (!response.ok) throw new Error("AI matching request failed");
+
+      const data = (await response.json()) as { results: MatchResult[] };
+      setResults(data.results);
+      setSource("ai");
+    } catch {
+      setAiUnavailable(true);
+    } finally {
+      setAiLoading(false);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
@@ -32,7 +67,7 @@ export default function DiscoverPage() {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          setSubmittedQuery(query);
+          runSearch(query);
         }}
         className="mx-auto mt-8 max-w-3xl"
       >
@@ -59,7 +94,7 @@ export default function DiscoverPage() {
               type="button"
               onClick={() => {
                 setQuery(suggestion);
-                setSubmittedQuery(suggestion);
+                runSearch(suggestion);
               }}
               className="rounded-full border border-stone-200 bg-white px-3.5 py-1.5 text-xs font-medium text-stone-600 transition hover:border-violet-300 hover:text-violet-800"
             >
@@ -71,9 +106,24 @@ export default function DiscoverPage() {
 
       <div className="mt-12">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-stone-900">
-            {submittedQuery ? "Recommended for you" : "All women in your network"}
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-stone-900">
+              {submittedQuery ? "Recommended for you" : "All women in your network"}
+            </h2>
+            {aiLoading && (
+              <span className="text-xs font-medium text-violet-500">Refining with AI&hellip;</span>
+            )}
+            {!aiLoading && source === "ai" && (
+              <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-600">
+                AI-matched
+              </span>
+            )}
+            {!aiLoading && aiUnavailable && (
+              <span className="text-xs font-medium text-stone-400">
+                AI matching unavailable &mdash; showing keyword matches
+              </span>
+            )}
+          </div>
           <span className="text-sm text-stone-500">{results.length} profiles</span>
         </div>
 

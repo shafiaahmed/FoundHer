@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { LogoutButton } from "@/components/LogoutButton";
+import { getCurrentUser } from "@/lib/supabase/auth";
 
-export function Navbar() {
+export async function Navbar() {
+  const user = await getCurrentUser();
+
   return (
     <header className="sticky top-0 z-40 border-b border-violet-100 bg-[#faf8f6]/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -14,12 +18,32 @@ export function Navbar() {
           >
             Discover
           </Link>
-          <Link
-            href="/onboarding"
-            className="rounded-full bg-violet-700 px-4 py-2 text-white shadow-sm transition hover:bg-violet-800"
-          >
-            Find My Circle
-          </Link>
+          {user ? (
+            <>
+              <Link
+                href="/account"
+                className="rounded-full px-4 py-2 text-stone-600 transition hover:bg-violet-50 hover:text-violet-800"
+              >
+                My Profile
+              </Link>
+              <LogoutButton />
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="rounded-full px-4 py-2 text-stone-600 transition hover:bg-violet-50 hover:text-violet-800"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/onboarding"
+                className="rounded-full bg-violet-700 px-4 py-2 text-white shadow-sm transition hover:bg-violet-800"
+              >
+                Find My Circle
+              </Link>
+            </>
+          )}
         </nav>
       </div>
     </header>

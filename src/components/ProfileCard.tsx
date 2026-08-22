@@ -69,8 +69,11 @@ export function ProfileCard({ profile, score, reasons }: ProfileCardProps) {
               Why you match
             </p>
             <ul className="space-y-1">
-              {reasons.slice(0, 3).map((reason) => (
-                <li key={reason.tag} className="flex items-start gap-1.5 text-sm text-violet-900">
+              {reasons.slice(0, 3).map((reason, index) => (
+                <li
+                  key={`${reason.tag}-${index}`}
+                  className="flex items-start gap-1.5 text-sm text-violet-900"
+                >
                   <span className="mt-0.5 text-violet-400">&bull;</span>
                   {reason.text}
                 </li>
