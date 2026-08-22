@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { generateIcebreaker } from "@/lib/icebreaker";
 import { getAvatarColor, getInitials } from "@/lib/format";
+import { createClient } from "@/lib/supabase/client";
 import { MatchReason, Profile } from "@/lib/types";
 
 interface ConnectModalProps {
@@ -12,20 +13,42 @@ interface ConnectModalProps {
   onClose: () => void;
 }
 
+type SendStatus = "idle" | "sending" | "sent" | "error";
+
 export function ConnectModal({ profile, reasons = [], open, onClose }: ConnectModalProps) {
   const [message, setMessage] = useState(() => generateIcebreaker(profile, reasons));
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState<SendStatus>("idle");
   const [prevOpen, setPrevOpen] = useState(open);
 
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
       setMessage(generateIcebreaker(profile, reasons));
-      setSent(false);
+      setStatus("idle");
     }
   }
 
   if (!open) return null;
+
+  async function handleSend() {
+    setStatus("sending");
+
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setStatus("error");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("connections")
+      .upsert({ user_id: user.id, profile_id: profile.id, message }, { onConflict: "user_id,profile_id" });
+
+    setStatus(error ? "error" : "sent");
+  }
 
   return (
     <div
@@ -36,7 +59,7 @@ export function ConnectModal({ profile, reasons = [], open, onClose }: ConnectMo
         className="animate-fade-in-up w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
-        {sent ? (
+        {status === "sent" ? (
           <div className="flex flex-col items-center py-6 text-center">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-2xl">
               ✅
@@ -96,11 +119,17 @@ export function ConnectModal({ profile, reasons = [], open, onClose }: ConnectMo
 
             <button
               type="button"
-              onClick={() => setSent(true)}
-              className="mt-5 w-full rounded-full bg-violet-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-800"
+              onClick={handleSend}
+              disabled={status === "sending"}
+              className="mt-5 w-full rounded-full bg-violet-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Send Connection Request
+              {status === "sending" ? "Sending..." : "Send Connection Request"}
             </button>
+            {status === "error" && (
+              <p className="mt-3 text-sm text-rose-600">
+                Something went wrong sending your request. Please try again.
+              </p>
+            )}
           </>
         )}
       </div>

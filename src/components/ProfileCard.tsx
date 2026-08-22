@@ -5,16 +5,18 @@ import { useState } from "react";
 import { MatchBadge } from "@/components/MatchBadge";
 import { ConnectModal } from "@/components/ConnectModal";
 import { getAvatarColor, getInitials } from "@/lib/format";
+import { useAuthGate } from "@/lib/supabase/useAuthGate";
 import { MatchReason, Profile } from "@/lib/types";
 
 interface ProfileCardProps {
   profile: Profile;
-  score: number;
-  reasons: MatchReason[];
+  score?: number;
+  reasons?: MatchReason[];
 }
 
-export function ProfileCard({ profile, score, reasons }: ProfileCardProps) {
+export function ProfileCard({ profile, score, reasons = [] }: ProfileCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const requireAuth = useAuthGate();
 
   return (
     <>
@@ -36,7 +38,7 @@ export function ProfileCard({ profile, score, reasons }: ProfileCardProps) {
               </p>
             </div>
           </Link>
-          <MatchBadge score={score} />
+          {score !== undefined && <MatchBadge score={score} />}
         </div>
 
         <p className="mt-4 text-sm leading-relaxed text-stone-600">{profile.bio}</p>
@@ -91,7 +93,7 @@ export function ProfileCard({ profile, score, reasons }: ProfileCardProps) {
           </Link>
           <button
             type="button"
-            onClick={() => setModalOpen(true)}
+            onClick={() => requireAuth(() => setModalOpen(true))}
             className="flex-1 rounded-full bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-800"
           >
             Connect

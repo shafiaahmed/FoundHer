@@ -25,6 +25,24 @@ export const HELP_CATEGORIES: HelpCategory[] = [
 
 export const COMMUNITIES: Community[] = ["Muslim Women in Tech"];
 
+export const UNIVERSITIES: string[] = [
+  "University of Waterloo",
+  "University of Toronto",
+  "McGill University",
+  "University of British Columbia",
+  "University of Alberta",
+  "University of Calgary",
+  "Queen's University",
+  "Western University",
+  "McMaster University",
+  "Simon Fraser University",
+  "York University",
+  "Carleton University",
+  "University of Ottawa",
+  "Toronto Metropolitan University",
+  "Concordia University",
+].sort();
+
 export const YEARS_OF_STUDY: string[] = [
   "1st Year",
   "2nd Year",

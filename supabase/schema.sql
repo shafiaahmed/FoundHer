@@ -26,3 +26,31 @@ create policy "Users can insert their own profile"
 create policy "Users can update their own profile"
   on public.profiles for update
   using (auth.uid() = id);
+
+-- Connection requests a user has sent to the mock/demo profiles shown on
+-- Discover. profile_id refers to a Profile.id from src/data/profiles.ts,
+-- not a row in this database — those profiles aren't real accounts, so
+-- this only tracks outreach the signed-in user has sent, not mutual
+-- friendships.
+create table if not exists public.connections (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  profile_id text not null,
+  message text not null,
+  created_at timestamptz not null default now(),
+  unique (user_id, profile_id)
+);
+
+alter table public.connections enable row level security;
+
+create policy "Users can view their own connections"
+  on public.connections for select
+  using (auth.uid() = user_id);
+
+create policy "Users can create their own connections"
+  on public.connections for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can remove their own connections"
+  on public.connections for delete
+  using (auth.uid() = user_id);
