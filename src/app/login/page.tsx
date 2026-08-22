@@ -7,10 +7,12 @@ type Status = "idle" | "sending" | "sent" | "error";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
+  const [attested, setAttested] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (!attested) return;
     setStatus("sending");
 
     try {
@@ -19,6 +21,10 @@ export default function LoginPage() {
         email,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            attested_woman: true,
+            attested_at: new Date().toISOString(),
+          },
         },
       });
 
@@ -58,10 +64,24 @@ export default function LoginPage() {
                 placeholder="you@university.edu"
                 className="input"
               />
+
+              <label className="flex items-start gap-2.5 text-sm text-stone-600">
+                <input
+                  type="checkbox"
+                  checked={attested}
+                  onChange={(event) => setAttested(event.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-violet-600 focus:ring-violet-400"
+                />
+                <span>
+                  FoundHer is a space for women in tech. By continuing, I confirm I identify as a
+                  woman.
+                </span>
+              </label>
+
               <button
                 type="submit"
-                disabled={status === "sending"}
-                className="w-full rounded-full bg-violet-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:opacity-60"
+                disabled={status === "sending" || !attested}
+                className="w-full rounded-full bg-violet-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {status === "sending" ? "Sending link..." : "Send magic link"}
               </button>
