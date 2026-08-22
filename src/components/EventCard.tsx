@@ -36,19 +36,15 @@ export default function EventCard({ event, score, onRsvp }: EventCardProps) {
           </div>
         )}
 
-        {/* Event type and source badges */}
+        {/* Event source */}
+        <p className="text-xs font-medium text-stone-400">
+          {event.isExternal ? "External · Eventbrite" : "Internal · FoundHer"}
+        </p>
+
+        {/* Event type badges */}
         <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${typeColor}`}>
             {event.eventType}
-          </span>
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              event.isExternal
-                ? "bg-orange-100 text-orange-800"
-                : "bg-violet-100 text-violet-800"
-            }`}
-          >
-            {event.isExternal ? "External · Eventbrite" : "Internal · FoundHer"}
           </span>
           {isPast && (
             <span className="rounded-full bg-stone-200 px-3 py-1 text-xs font-semibold text-stone-600">
