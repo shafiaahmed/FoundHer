@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { deleteEvent, getEventById, updateEvent } from "@/lib/eventStorage";
+import { attachFoundHerAttendance } from "@/lib/eventAttendance";
 
 /**
  * GET /api/events/[id]
@@ -18,7 +19,8 @@ export async function GET(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ event });
+    const [eventWithAttendance] = await attachFoundHerAttendance([event]);
+    return NextResponse.json({ event: eventWithAttendance });
   } catch (error) {
     console.error("Error fetching event:", error);
     return NextResponse.json({ error: "Failed to fetch event" }, { status: 500 });

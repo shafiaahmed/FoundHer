@@ -6,8 +6,10 @@ import EventCard from "@/components/EventCard";
 import EventFilterChips from "@/components/EventFilterChips";
 import { filterEvents } from "@/lib/eventMatching";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function EventsPage() {
+  const router = useRouter();
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("Toronto");
@@ -60,8 +62,50 @@ export default function EventsPage() {
     [searchQuery, selectedTypes, selectedTags, allEvents]
   );
 
-  const handleRsvp = () => {
-    window.alert(`You have RSVP'd for this event. (Mocked flow for now)`);
+  const handleRsvp = async (event: Event) => {
+    const nextGoing = !event.currentUserGoing;
+    const response = await fetch(`/api/events/${encodeURIComponent(event.id)}/rsvp`, {
+      method: nextGoing ? "POST" : "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: nextGoing
+        ? JSON.stringify({
+            visibility: "members",
+            event: {
+              externalId: event.externalId,
+              title: event.title,
+              url: event.url,
+              date: event.date,
+              location: event.location,
+              isExternal: event.isExternal,
+            },
+          })
+        : undefined,
+    });
+
+    if (response.status === 401) {
+      router.push(`/login?next=${encodeURIComponent("/events")}`);
+      return;
+    }
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      window.alert(result?.error ?? "Unable to update your attendance right now.");
+      return;
+    }
+
+    setAllEvents((events) =>
+      events.map((item) =>
+        item.id === event.id
+          ? {
+              ...item,
+              currentUserGoing: nextGoing,
+              foundHerAttendeeCount: Math.max(
+                0,
+                (item.foundHerAttendeeCount ?? 0) + (nextGoing ? 1 : -1)
+              ),
+            }
+          : item
+      )
+    );
   };
 
   const hasActiveFilters = searchQuery || selectedTypes.length > 0 || selectedTags.length > 0;

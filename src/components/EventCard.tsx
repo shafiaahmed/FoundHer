@@ -7,7 +7,7 @@ import { formatEventDate } from "@/lib/format";
 interface EventCardProps {
   event: Event;
   score?: number;
-  onRsvp?: (eventId: string) => void;
+  onRsvp?: (event: Event) => void;
 }
 
 export default function EventCard({ event, score, onRsvp }: EventCardProps) {
@@ -102,20 +102,33 @@ export default function EventCard({ event, score, onRsvp }: EventCardProps) {
           </div>
         )}
 
-        {/* Attendee Count & CTA */}
-        <div className="flex items-center justify-between border-t border-stone-100 pt-4">
+        {/* FoundHer attendance and actions */}
+        <div className="border-t border-stone-100 pt-4">
           <span className="text-sm text-stone-600">
-            {event.attendeeCount} {event.attendeeCount === 1 ? "person" : "people"} attending
+            {event.foundHerAttendeeCount ?? 0} FoundHer {(event.foundHerAttendeeCount ?? 0) === 1 ? "member" : "members"} going
           </span>
-          {!isPast && event.isExternal && event.url ? (
+          {!isPast && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => onRsvp?.(event)}
+                className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${
+                  event.currentUserGoing
+                    ? "border border-violet-300 bg-violet-50 text-violet-800 hover:bg-violet-100"
+                    : "bg-violet-600 text-white hover:bg-violet-700"
+                }`}
+              >
+                {event.currentUserGoing ? "Shared: I’m Going ✓" : "Share I’m Going"}
+              </button>
+          {event.isExternal && event.url && (
             <a
               href={event.url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
-              aria-label={`RSVP for ${event.title} on Eventbrite (opens in a new tab)`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 px-3 py-1.5 text-sm font-semibold text-stone-700 transition-colors hover:bg-stone-50"
+              aria-label={`Get tickets for ${event.title} on Eventbrite (opens in a new tab)`}
             >
-              RSVP
+              Get tickets
               <svg
                 viewBox="0 0 20 20"
                 fill="none"
@@ -128,14 +141,9 @@ export default function EventCard({ event, score, onRsvp }: EventCardProps) {
                 <path d="M15 11v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" />
               </svg>
             </a>
-          ) : !isPast ? (
-            <button
-              onClick={() => onRsvp?.(event.id)}
-              className="rounded-lg bg-violet-600 px-3 py-1 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
-            >
-              RSVP
-            </button>
-          ) : null}
+          )}
+            </div>
+          )}
         </div>
       </article>
   );

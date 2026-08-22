@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAllEvents, createEvent } from "@/lib/eventStorage";
 import { getExternalEventsWithCache } from "@/lib/externalEvents";
+import { attachFoundHerAttendance } from "@/lib/eventAttendance";
 
 /**
  * GET /api/events
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
       externalEvents = [];
     }
 
-    const events = [...internalEvents, ...externalEvents];
+    const events = await attachFoundHerAttendance([...internalEvents, ...externalEvents]);
     return NextResponse.json({ events, total: events.length });
   } catch (error) {
     console.error("Error fetching events:", error);

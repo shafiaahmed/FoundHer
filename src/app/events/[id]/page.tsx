@@ -68,6 +68,55 @@ export default function EventDetailPage() {
     }
   };
 
+  const handleAttendance = async () => {
+    if (!event) return;
+    const nextGoing = !event.currentUserGoing;
+    const response = await fetch(`/api/events/${encodeURIComponent(event.id)}/rsvp`, {
+      method: nextGoing ? "POST" : "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: nextGoing
+        ? JSON.stringify({
+            visibility: "members",
+            event: {
+              externalId: event.externalId,
+              title: event.title,
+              url: event.url,
+              date: event.date,
+              location: event.location,
+              isExternal: event.isExternal,
+            },
+          })
+        : undefined,
+    });
+
+    if (response.status === 401) {
+      router.push(`/login?next=${encodeURIComponent(`/events/${event.id}`)}`);
+      return;
+    }
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      window.alert(result?.error ?? "Unable to update your attendance right now.");
+      return;
+    }
+
+    const result = await response.json();
+    setEvent((current) => {
+      if (!current) return current;
+      const attendees = current.foundHerAttendees ?? [];
+      return {
+        ...current,
+        currentUserGoing: nextGoing,
+        foundHerAttendeeCount: Math.max(
+          0,
+          (current.foundHerAttendeeCount ?? 0) + (nextGoing ? 1 : -1)
+        ),
+        foundHerAttendees: nextGoing
+          ? [...attendees, { userId: result.userId, userName: result.userName }]
+          : attendees.filter((attendee) => attendee.userId !== currentUserId),
+      };
+    });
+  };
+
   if (!event) {
     return (
       <main className="min-h-screen bg-stone-50">
@@ -131,6 +180,28 @@ export default function EventDetailPage() {
             <p className="whitespace-pre-wrap text-stone-700">{event.description}</p>
           </div>
 
+          <div className="mt-8 border-t border-stone-200 pt-8">
+            <h3 className="font-semibold text-stone-900">
+              FoundHer members planning to attend ({event.foundHerAttendeeCount ?? 0})
+            </h3>
+            {(event.foundHerAttendees?.length ?? 0) > 0 ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {event.foundHerAttendees?.map((attendee) => (
+                  <span
+                    key={attendee.userId}
+                    className="rounded-full bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-800"
+                  >
+                    {attendee.userName}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-stone-500">
+                No members have shared that they are going yet.
+              </p>
+            )}
+          </div>
+
           {event.tags.length > 0 && (
             <div className="mt-8 border-t border-stone-200 pt-8">
               <h3 className="mb-4 font-semibold text-stone-900">Tags</h3>
@@ -167,20 +238,25 @@ export default function EventDetailPage() {
 
           {!isPast && !isCreator && (
             <div className="mt-8 border-t border-stone-200 pt-8">
-              {event.isExternal && event.url ? (
-                <a
-                  href={event.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex w-full items-center justify-center rounded-lg bg-violet-600 px-6 py-3 text-lg font-bold text-white transition-colors hover:bg-violet-700"
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={handleAttendance}
+                  className="w-full rounded-lg bg-violet-600 px-6 py-3 font-bold text-white transition-colors hover:bg-violet-700"
                 >
-                  RSVP on Eventbrite
-                </a>
-              ) : (
-                <button className="w-full rounded-lg bg-violet-600 px-6 py-3 text-lg font-bold text-white transition-colors hover:bg-violet-700">
-                  RSVP to Event
+                  {event.currentUserGoing ? "Shared: I’m Going ✓" : "Share I’m Going"}
                 </button>
-              )}
+                {event.isExternal && event.url && (
+                  <a
+                    href={event.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-stone-300 px-6 py-3 font-bold text-stone-700 transition-colors hover:bg-stone-50"
+                  >
+                    Get tickets on Eventbrite ↗
+                  </a>
+                )}
+              </div>
             </div>
           )}
 

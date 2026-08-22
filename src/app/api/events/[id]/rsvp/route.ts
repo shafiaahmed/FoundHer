@@ -1,115 +1,108 @@
 import { NextResponse } from "next/server";
-import { events as sampleEvents } from "@/data/events";
+import { createClient } from "@/lib/supabase/server";
 
-/**
- * POST /api/events/[id]/rsvp
- * RSVP a user to an event
- */
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+type AttendanceRequest = {
+  visibility?: "members" | "private";
+  event?: {
+    externalId?: string;
+    title?: string;
+    url?: string;
+    date?: string;
+    location?: string;
+    isExternal?: boolean;
+  };
+};
+
+function attendanceErrorResponse(error: unknown) {
+  const databaseError = error as { code?: string; message?: string };
+  const tablesMissing = databaseError.code === "PGRST205" || databaseError.message?.includes("schema cache");
+  console.error("Error saving FoundHer attendance:", databaseError.code, databaseError.message);
+  return NextResponse.json(
+    {
+      error: tablesMissing
+        ? "Attendance storage has not been set up in Supabase yet. Run the event attendance migration."
+        : "Unable to update your attendance right now.",
+    },
+    { status: tablesMissing ? 503 : 500 }
+  );
+}
+
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const body = (await request.json()) as { userId: string; userName: string };
+    const body = (await request.json()) as AttendanceRequest;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const event = sampleEvents.find((e) => e.id === id);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
-    }
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("name")
+      .eq("id", user.id)
+      .single();
 
-    // Check if already RSVPed
-    if (event.attendees.some((a) => a.userId === body.userId)) {
-      return NextResponse.json(
-        { error: "You are already attending this event" },
-        { status: 400 }
-      );
-    }
+    if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 400 });
 
-    // Check capacity
-    if (event.maxAttendees && event.attendeeCount >= event.maxAttendees) {
-      return NextResponse.json(
-        { error: "Event is at maximum capacity" },
-        { status: 400 }
-      );
-    }
+    if (body.event?.isExternal) {
+      if (!body.event.externalId || !body.event.title || !body.event.url) {
+        return NextResponse.json({ error: "Invalid external event" }, { status: 400 });
+      }
 
-    // TODO: Update in database
-    // For now, simulate the update
-
-    const updatedEvent = {
-      ...event,
-      attendeeCount: event.attendeeCount + 1,
-      attendees: [
-        ...event.attendees,
+      const { error: snapshotError } = await supabase.from("external_events").upsert(
         {
-          userId: body.userId,
-          userName: body.userName,
-          rsvpDate: new Date().toISOString(),
+          event_key: id,
+          external_id: body.event.externalId,
+          provider: "eventbrite",
+          title: body.event.title,
+          url: body.event.url,
+          date: body.event.date || null,
+          location: body.event.location || null,
+          last_synced_at: new Date().toISOString(),
         },
-      ],
-    };
+        { onConflict: "event_key" }
+      );
+      if (snapshotError) throw snapshotError;
+    }
 
-    // TODO: Persist updatedEvent to database
-
-    return NextResponse.json(
+    const { error } = await supabase.from("event_attendance").upsert(
       {
-        event: updatedEvent,
-        message: "Successfully RSVPed to event",
+        event_key: id,
+        user_id: user.id,
+        display_name: profile.name,
+        status: "going",
+        visibility: body.visibility === "private" ? "private" : "members",
+        updated_at: new Date().toISOString(),
       },
-      { status: 200 }
+      { onConflict: "event_key,user_id" }
     );
+
+    if (error) throw error;
+    return NextResponse.json({ going: true, userId: user.id, userName: profile.name });
   } catch (error) {
-    console.error("Error RSVPing to event:", error);
-    return NextResponse.json({ error: "Failed to RSVP to event" }, { status: 500 });
+    return attendanceErrorResponse(error);
   }
 }
 
-/**
- * DELETE /api/events/[id]/rsvp
- * Cancel RSVP for a user
- */
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const body = (await request.json()) as { userId: string };
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const event = sampleEvents.find((e) => e.id === id);
+    const { error } = await supabase
+      .from("event_attendance")
+      .delete()
+      .eq("event_key", id)
+      .eq("user_id", user.id);
 
-    if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
-    }
-
-    const attendeeIndex = event.attendees.findIndex((a) => a.userId === body.userId);
-
-    if (attendeeIndex === -1) {
-      return NextResponse.json(
-        { error: "You are not attending this event" },
-        { status: 400 }
-      );
-    }
-
-    // TODO: Update in database
-
-    const updatedEvent = {
-      ...event,
-      attendeeCount: event.attendeeCount - 1,
-      attendees: event.attendees.filter((_, i) => i !== attendeeIndex),
-    };
-
-    return NextResponse.json(
-      {
-        event: updatedEvent,
-        message: "Successfully cancelled RSVP",
-      },
-      { status: 200 }
-    );
+    if (error) throw error;
+    return NextResponse.json({ going: false });
   } catch (error) {
-    console.error("Error cancelling RSVP:", error);
-    return NextResponse.json({ error: "Failed to cancel RSVP" }, { status: 500 });
+    return attendanceErrorResponse(error);
   }
 }

@@ -95,6 +95,9 @@ export interface Event {
   isExternal: boolean; // true if from Eventbrite
   externalId?: string; // Eventbrite event ID
   url?: string; // External event URL
+  foundHerAttendeeCount?: number;
+  foundHerAttendees?: { userId: string; userName: string }[];
+  currentUserGoing?: boolean;
 }
 
 export interface EventRecommendation {
