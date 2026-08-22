@@ -6,6 +6,7 @@ create table if not exists public.profiles (
   university text not null,
   program text not null,
   year text not null,
+  company text,
   interests text[] not null default '{}',
   help_with text[] not null default '{}',
   looking_for text[] not null default '{}',
@@ -123,3 +124,27 @@ create policy "Members can update their own attendance"
 create policy "Members can remove their own attendance"
   on public.event_attendance for delete to authenticated
   using (auth.uid() = user_id);
+
+-- Direct messages between two real signed-up users. Only available once a
+-- connection exists between them in either direction — there's no separate
+-- "accept" step, sending or receiving a connection request is enough.
+create table if not exists public.messages (
+  id uuid primary key default gen_random_uuid(),
+  sender_id uuid not null references auth.users (id) on delete cascade,
+  recipient_id uuid not null references auth.users (id) on delete cascade,
+  body text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists messages_thread_idx
+  on public.messages (least(sender_id, recipient_id), greatest(sender_id, recipient_id), created_at);
+
+alter table public.messages enable row level security;
+
+create policy "Users can view messages they sent or received"
+  on public.messages for select
+  using (auth.uid() = sender_id or auth.uid() = recipient_id);
+
+create policy "Users can send messages as themselves"
+  on public.messages for insert
+  with check (auth.uid() = sender_id);

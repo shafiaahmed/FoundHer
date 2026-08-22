@@ -39,6 +39,7 @@ export function DiscoverContent() {
   const [universityFilter, setUniversityFilter] = useState("");
   const [interestFilter, setInterestFilter] = useState("");
   const [helpFilter, setHelpFilter] = useState("");
+  const [companyFilter, setCompanyFilter] = useState("");
 
   // Bring real signed-up users into the searchable/browsable pool alongside the mock profiles.
   useEffect(() => {
@@ -52,6 +53,12 @@ export function DiscoverContent() {
 
       const { data } = await supabase.from("profiles").select("*").returns<ProfileRow[]>();
       if (cancelled || !data) return;
+
+      // Default the search box to your own company as a starting point — still fully editable.
+      const me = data.find((row) => row.id === user?.id);
+      if (me?.company) {
+        setCompanyFilter((current) => current || me.company!);
+      }
 
       const realProfiles = data.filter((row) => row.id !== user?.id).map(toProfile);
       if (realProfiles.length === 0) return;
@@ -128,15 +135,18 @@ export function DiscoverContent() {
   const suggested = submittedQuery ? results.slice(0, SUGGESTED_COUNT) : [];
 
   const browsable = useMemo(() => {
+    const normalizedCompany = companyFilter.trim().toLowerCase();
+
     return allProfiles
       .filter((profile) => {
         if (universityFilter && profile.university !== universityFilter) return false;
         if (interestFilter && !(profile.interests as string[]).includes(interestFilter)) return false;
         if (helpFilter && !(profile.helpWith as string[]).includes(helpFilter)) return false;
+        if (normalizedCompany && !profile.company?.toLowerCase().includes(normalizedCompany)) return false;
         return true;
       })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allProfiles, universityFilter, interestFilter, helpFilter]);
+  }, [allProfiles, universityFilter, interestFilter, helpFilter, companyFilter]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
@@ -266,13 +276,22 @@ export function DiscoverContent() {
             ))}
           </select>
 
-          {(universityFilter || interestFilter || helpFilter) && (
+          <input
+            type="text"
+            value={companyFilter}
+            onChange={(event) => setCompanyFilter(event.target.value)}
+            placeholder="Search by company"
+            className="rounded-full border border-stone-300 bg-white px-3.5 py-2 text-sm text-stone-700 placeholder:text-stone-400 focus:border-violet-400 focus:outline-none"
+          />
+
+          {(universityFilter || interestFilter || helpFilter || companyFilter) && (
             <button
               type="button"
               onClick={() => {
                 setUniversityFilter("");
                 setInterestFilter("");
                 setHelpFilter("");
+                setCompanyFilter("");
               }}
               className="rounded-full px-3.5 py-2 text-sm font-medium text-violet-700 transition hover:bg-violet-50"
             >

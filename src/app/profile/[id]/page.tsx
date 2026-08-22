@@ -34,6 +34,7 @@ export default async function ProfilePage({ params }: PageProps<"/profile/[id]">
             <p className="text-stone-600">
               {profile.program} &middot; {profile.year}
             </p>
+            {profile.company && <p className="text-stone-600">{profile.company}</p>}
             {profile.communities.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {profile.communities.map((community) => (

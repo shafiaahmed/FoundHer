@@ -7,6 +7,7 @@ export interface ProfileRow {
   university: string;
   program: string;
   year: string;
+  company: string | null;
   interests: string[];
   help_with: string[];
   looking_for: string[];
@@ -27,5 +28,6 @@ export function toProfile(row: ProfileRow): Profile {
     helpWith: row.help_with as HelpCategory[],
     lookingFor: row.looking_for as MatchTag[],
     communities: row.communities as Community[],
+    company: row.company ?? undefined,
   };
 }

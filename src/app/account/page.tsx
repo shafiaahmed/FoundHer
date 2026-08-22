@@ -56,6 +56,7 @@ export default async function AccountPage() {
             <p className="text-stone-600">
               {profile.program} &middot; {profile.year}
             </p>
+            {profile.company && <p className="text-stone-600">{profile.company}</p>}
             <p className="mt-1 text-sm text-stone-400">{user.email}</p>
           </div>
           <Link

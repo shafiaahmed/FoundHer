@@ -35,6 +35,8 @@ export interface Profile {
   helpWith: HelpCategory[];
   lookingFor: MatchTag[];
   communities: Community[];
+  /** Current or most recent employer, if any — not everyone has one yet. */
+  company?: string;
 }
 
 export interface MatchReason {
@@ -56,6 +58,7 @@ export interface OnboardingData {
   university: string;
   program: string;
   year: string;
+  company: string;
   interests: Interest[];
   helpWith: HelpCategory[];
   lookingFor: MatchTag[];

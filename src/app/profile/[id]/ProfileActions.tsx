@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ConnectModal } from "@/components/ConnectModal";
+import { isRealProfileId } from "@/lib/realProfile";
+import { checkCanMessage } from "@/lib/supabase/canMessage";
 import { createClient } from "@/lib/supabase/client";
 import { findExistingConnection } from "@/lib/supabase/connectionCheck";
 import { useAuthGate } from "@/lib/supabase/useAuthGate";
@@ -10,7 +13,9 @@ import { Profile } from "@/lib/types";
 export function ProfileActions({ profile }: { profile: Profile }) {
   const [open, setOpen] = useState(false);
   const [alreadySent, setAlreadySent] = useState(false);
+  const [messagingUnlocked, setMessagingUnlocked] = useState(false);
   const requireAuth = useAuthGate();
+  const isReal = isRealProfileId(profile.id);
 
   useEffect(() => {
     let cancelled = false;
@@ -24,13 +29,30 @@ export function ProfileActions({ profile }: { profile: Profile }) {
       if (!user) return;
 
       const existing = await findExistingConnection(supabase, user.id, profile.id);
-      if (!cancelled && existing) setAlreadySent(true);
+      if (cancelled) return;
+      if (existing) setAlreadySent(true);
+
+      if (isReal) {
+        const unlocked = await checkCanMessage(supabase, user.id, profile.id);
+        if (!cancelled && unlocked) setMessagingUnlocked(true);
+      }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [profile.id]);
+  }, [profile.id, isReal]);
+
+  if (messagingUnlocked) {
+    return (
+      <Link
+        href={`/messages/${profile.id}`}
+        className="inline-block w-full rounded-full bg-violet-700 px-6 py-3.5 text-center text-sm font-semibold text-white transition hover:bg-violet-800 sm:w-auto"
+      >
+        Message {profile.name.split(" ")[0]}
+      </Link>
+    );
+  }
 
   return (
     <>
