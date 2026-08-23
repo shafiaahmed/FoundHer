@@ -35,8 +35,8 @@ export function formatEventDate(dateString: string): string {
 
 export function getEventDateTime(dateString: string, timeString = "23:59"): Date {
   const [year, month, day] = dateString.split("-").map(Number);
-  const [hours, minutes] = timeString.split(":").map(Number);
-  return new Date(year, month - 1, day, hours || 0, minutes || 0);
+  const time = parseEventTime(timeString) ?? { hours: 23, minutes: 59 };
+  return new Date(year, month - 1, day, time.hours, time.minutes);
 }
 
 export function isEventPast(dateString: string, timeString?: string): boolean {
@@ -48,11 +48,33 @@ export function isEventPast(dateString: string, timeString?: string): boolean {
  * E.g., "14:30" → "2:30 PM"
  */
 export function formatEventTime(timeString: string): string {
-  const [hours, minutes] = timeString.split(":").map(Number);
-  const date = new Date(2000, 0, 1, hours, minutes);
+  const time = parseEventTime(timeString);
+  if (!time) return "TBA";
+
+  const date = new Date(2000, 0, 1, time.hours, time.minutes);
   return date.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
   });
+}
+
+function parseEventTime(timeString: string): { hours: number; minutes: number } | null {
+  const match = timeString.trim().match(/^(\d{1,2}):(\d{2})(?:\s*([ap]m))?$/i);
+  if (!match) return null;
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const meridiem = match[3]?.toLowerCase();
+
+  if (minutes < 0 || minutes > 59) return null;
+  if (meridiem) {
+    if (hours < 1 || hours > 12) return null;
+    if (meridiem === "am" && hours === 12) hours = 0;
+    if (meridiem === "pm" && hours !== 12) hours += 12;
+  } else if (hours < 0 || hours > 23) {
+    return null;
+  }
+
+  return { hours, minutes };
 }
