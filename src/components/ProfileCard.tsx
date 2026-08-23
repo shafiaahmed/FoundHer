@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { MatchBadge } from "@/components/MatchBadge";
 import { ConnectModal } from "@/components/ConnectModal";
 import { getAvatarColor, getInitials } from "@/lib/format";
 import { isRealProfileId } from "@/lib/realProfile";
@@ -14,11 +13,10 @@ import { MatchReason, Profile } from "@/lib/types";
 
 interface ProfileCardProps {
   profile: Profile;
-  score?: number;
   reasons?: MatchReason[];
 }
 
-export function ProfileCard({ profile, score, reasons = [] }: ProfileCardProps) {
+export function ProfileCard({ profile, reasons = [] }: ProfileCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [alreadySent, setAlreadySent] = useState(false);
   const [messagingUnlocked, setMessagingUnlocked] = useState(false);
@@ -72,7 +70,6 @@ export function ProfileCard({ profile, score, reasons = [] }: ProfileCardProps) 
               {profile.company && <p className="text-sm text-stone-500">{profile.company}</p>}
             </div>
           </Link>
-          {score !== undefined && <MatchBadge score={score} />}
         </div>
 
         <p className="mt-4 text-sm leading-relaxed text-stone-600">{profile.bio}</p>
@@ -98,25 +95,6 @@ export function ProfileCard({ profile, score, reasons = [] }: ProfileCardProps) 
             </span>
           ))}
         </div>
-
-        {reasons.length > 0 && (
-          <div className="mt-4 rounded-xl bg-violet-50/70 p-3">
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-violet-600">
-              Why you match
-            </p>
-            <ul className="space-y-1">
-              {reasons.slice(0, 3).map((reason, index) => (
-                <li
-                  key={`${reason.tag}-${index}`}
-                  className="flex items-start gap-1.5 text-sm text-violet-900"
-                >
-                  <span className="mt-0.5 text-violet-400">&bull;</span>
-                  {reason.text}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         <div className="mt-auto flex items-center gap-2 pt-5">
           <Link
