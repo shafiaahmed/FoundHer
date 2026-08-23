@@ -130,7 +130,7 @@ export interface EventFilter {
   searchQuery?: string;
 }
 
-export type PostCategory = "question" | "collaboration" | "offering_help" | "general";
+export type PostCategory = "question" | "advice" | "collaboration" | "offering_help" | "general";
 
 export interface CommunityPost {
   id: string;

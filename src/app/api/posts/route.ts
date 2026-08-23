@@ -4,6 +4,7 @@ import { CommunityPost, PostCategory } from "@/lib/types";
 
 const POST_CATEGORIES: PostCategory[] = [
   "question",
+  "advice",
   "collaboration",
   "offering_help",
   "general",

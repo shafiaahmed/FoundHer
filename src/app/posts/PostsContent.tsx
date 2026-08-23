@@ -14,6 +14,12 @@ const CATEGORY_DETAILS: Record<
     description: "Get advice or answers from the community.",
     classes: "border-violet-200 bg-violet-50 text-violet-800",
   },
+  advice: {
+    label: "Advice",
+    shortLabel: "Advice",
+    description: "Ask for or share guidance, experiences, and helpful lessons.",
+    classes: "border-sky-200 bg-sky-50 text-sky-800",
+  },
   collaboration: {
     label: "Find my people",
     shortLabel: "Looking for collaborators",
@@ -160,7 +166,7 @@ export function PostsContent({
 
             <fieldset className="mt-4">
               <legend className="text-sm font-semibold text-stone-800">What kind of post is this?</legend>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {CATEGORIES.map((option) => {
                   const details = CATEGORY_DETAILS[option];
                   const selected = category === option;
@@ -170,14 +176,14 @@ export function PostsContent({
                       type="button"
                       aria-pressed={selected}
                       onClick={() => setCategory(option)}
-                      className={`rounded-xl border p-3 text-left transition ${
+                      className={`rounded-xl border p-2.5 text-left transition ${
                         selected
                           ? `${details.classes} ring-2 ring-violet-200`
                           : "border-stone-200 bg-white text-stone-700 hover:border-violet-200 hover:bg-violet-50/40"
                       }`}
                     >
                       <span className="block text-sm font-semibold">{details.label}</span>
-                      <span className="mt-0.5 block text-xs leading-5 opacity-75">{details.description}</span>
+                      <span className="mt-0.5 block text-xs leading-4 opacity-75">{details.description}</span>
                     </button>
                   );
                 })}

@@ -162,7 +162,7 @@ create table if not exists public.posts (
   author_id uuid not null references auth.users (id) on delete cascade,
   author_name text not null,
   category text not null default 'general'
-    check (category in ('question', 'collaboration', 'offering_help', 'general')),
+    check (category in ('question', 'advice', 'collaboration', 'offering_help', 'general')),
   content text not null check (char_length(content) between 1 and 2000),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

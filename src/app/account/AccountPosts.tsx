@@ -6,6 +6,7 @@ import { CommunityPost, PostCategory } from "@/lib/types";
 
 const CATEGORY_LABELS: Record<PostCategory, string> = {
   question: "Question",
+  advice: "Advice",
   collaboration: "Looking for collaborators",
   offering_help: "Offering help",
   general: "General",
