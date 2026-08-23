@@ -129,3 +129,15 @@ export interface EventFilter {
   dateTo?: string;
   searchQuery?: string;
 }
+
+export type PostCategory = "question" | "collaboration" | "offering_help" | "general";
+
+export interface CommunityPost {
+  id: string;
+  authorId: string;
+  authorName: string;
+  category: PostCategory;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
