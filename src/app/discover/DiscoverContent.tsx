@@ -26,7 +26,9 @@ export function DiscoverContent() {
 
   const [query, setQuery] = useState(initialQuery);
   const [submittedQuery, setSubmittedQuery] = useState(initialQuery);
-  const [results, setResults] = useState<MatchResult[]>(() => getRecommendations(initialQuery));
+  const [results, setResults] = useState<MatchResult[]>(() =>
+    getRecommendations(initialQuery),
+  );
   const [source, setSource] = useState<MatchSource>("keyword");
   const [aiLoading, setAiLoading] = useState(Boolean(initialQuery));
   const [aiUnavailable, setAiUnavailable] = useState(false);
@@ -100,9 +102,15 @@ export function DiscoverContent() {
 
   const browsable = useMemo(() => {
     return PROFILES.filter((profile) => {
-      if (universityFilter && profile.university !== universityFilter) return false;
-      if (interestFilter && !(profile.interests as string[]).includes(interestFilter)) return false;
-      if (helpFilter && !(profile.helpWith as string[]).includes(helpFilter)) return false;
+      if (universityFilter && profile.university !== universityFilter)
+        return false;
+      if (
+        interestFilter &&
+        !(profile.interests as string[]).includes(interestFilter)
+      )
+        return false;
+      if (helpFilter && !(profile.helpWith as string[]).includes(helpFilter))
+        return false;
       return true;
     }).sort((a, b) => a.name.localeCompare(b.name));
   }, [universityFilter, interestFilter, helpFilter]);
@@ -113,10 +121,6 @@ export function DiscoverContent() {
         <h1 className="text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
           What are you looking for today?
         </h1>
-        <p className="mt-3 text-stone-600">
-          Tell us what you need in your own words &mdash; we&apos;ll match you with women who&apos;ve
-          been there.
-        </p>
       </div>
 
       <form
@@ -163,9 +167,13 @@ export function DiscoverContent() {
         <div className="mt-12">
           <div className="mb-5 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-stone-900">Suggested for you</h2>
+              <h2 className="text-lg font-semibold text-stone-900">
+                Suggested for you
+              </h2>
               {aiLoading && (
-                <span className="text-xs font-medium text-violet-500">Refining with AI&hellip;</span>
+                <span className="text-xs font-medium text-violet-500">
+                  Refining with AI&hellip;
+                </span>
               )}
               {!aiLoading && source === "ai" && (
                 <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-600">
@@ -182,7 +190,12 @@ export function DiscoverContent() {
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {suggested.map(({ profile, score, reasons }) => (
-              <ProfileCard key={profile.id} profile={profile} score={score} reasons={reasons} />
+              <ProfileCard
+                key={profile.id}
+                profile={profile}
+                score={score}
+                reasons={reasons}
+              />
             ))}
           </div>
         </div>
@@ -190,8 +203,12 @@ export function DiscoverContent() {
 
       <div className="mt-12">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-stone-900">All women in your network</h2>
-          <span className="text-sm text-stone-500">{browsable.length} profiles</span>
+          <h2 className="text-lg font-semibold text-stone-900">
+            All women in your network
+          </h2>
+          <span className="text-sm text-stone-500">
+            {browsable.length} profiles
+          </span>
         </div>
 
         <div className="mb-6 flex flex-wrap gap-2.5">
@@ -250,7 +267,9 @@ export function DiscoverContent() {
         </div>
 
         {browsable.length === 0 ? (
-          <p className="text-sm text-stone-500">No profiles match these filters.</p>
+          <p className="text-sm text-stone-500">
+            No profiles match these filters.
+          </p>
         ) : (
           <ProfileCarousel profiles={browsable} />
         )}
