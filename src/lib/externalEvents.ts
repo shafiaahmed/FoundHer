@@ -120,9 +120,15 @@ function toLocationString(location?: NonNullable<EventbriteJsonLdItem["item"]>["
 
 function toTimeString(dateString?: string): string {
   if (!dateString) return "TBA";
+
+  // Eventbrite dates are ISO strings. Preserve the event's advertised local
+  // clock time instead of converting it to the server's timezone.
+  const isoTime = dateString.match(/T(\d{2}):(\d{2})/);
+  if (isoTime) return `${isoTime[1]}:${isoTime[2]}`;
+
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return "TBA";
-  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
 function extractJsonLd(html: string): EventbriteJsonLdItem[] {
