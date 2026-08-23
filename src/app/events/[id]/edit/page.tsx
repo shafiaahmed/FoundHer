@@ -29,8 +29,9 @@ export default function EditEventPage() {
   useEffect(() => {
     async function loadEvent() {
       try {
-        const response = await fetch(`/api/events/${eventId}`);
-        const data = await response.json();
+        const response = await fetch(`/api/events/${encodeURIComponent(eventId)}`);
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data?.event) return;
         const nextEvent = data.event as Event | null;
         setEvent(nextEvent);
 

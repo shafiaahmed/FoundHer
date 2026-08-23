@@ -12,6 +12,8 @@ export default function EventDetailPage() {
   const eventId = params.id as string;
 
   const [event, setEvent] = useState<Event | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [attendeeToRemove, setAttendeeToRemove] = useState<{ id: string; name: string } | null>(null);
@@ -21,11 +23,18 @@ export default function EventDetailPage() {
   useEffect(() => {
     async function loadEvent() {
       try {
-        const response = await fetch(`/api/events/${eventId}`);
-        const data = await response.json();
+        const response = await fetch(`/api/events/${encodeURIComponent(eventId)}`);
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data?.event) {
+          setLoadError(data?.error ?? "Unable to load this event.");
+          return;
+        }
         setEvent(data.event ?? null);
       } catch (error) {
         console.error("Failed to load event:", error);
+        setLoadError("Unable to load this event.");
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -202,11 +211,21 @@ export default function EventDetailPage() {
     setAttendeeToRemove(null);
   };
 
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-stone-50">
+        <div className="mx-auto max-w-3xl px-6 py-12">
+          <p className="text-stone-600">Loading event...</p>
+        </div>
+      </main>
+    );
+  }
+
   if (!event) {
     return (
       <main className="min-h-screen bg-stone-50">
         <div className="mx-auto max-w-3xl px-6 py-12">
-          <p className="text-stone-600">Event not found</p>
+          <p className="text-stone-600">{loadError || "Event not found"}</p>
           <Link href="/events" className="mt-4 text-violet-600 hover:underline">
             Back to Events
           </Link>
