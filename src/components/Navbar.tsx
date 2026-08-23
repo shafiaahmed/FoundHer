@@ -17,24 +17,26 @@ export async function Navbar() {
           </span>
           <span>Found<span className="text-violet-500">Her</span></span>
         </Link>
-        <nav className="flex min-w-0 max-w-[calc(100vw-8rem)] shrink items-center gap-0 overflow-x-auto text-xs font-medium [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-2 sm:text-sm [&::-webkit-scrollbar]:hidden [&>*]:shrink-0 [&>*]:whitespace-nowrap [&>a]:px-2 sm:[&>a]:px-4">
-          <NavLink href="/discover">Discover</NavLink>
-          <NavLink href="/events">Events</NavLink>
-          <NavLink href="/posts">Posts</NavLink>
-          {user ? (
-            <>
-              <NavLink href="/connections">My Connections</NavLink>
-              <MessageNavIcon />
-              <NotificationBell />
-              <ProfileMenu />
-            </>
-          ) : (
-            <>
-              <NavLink href="/login">Log in</NavLink>
-              <NavLink href="/onboarding" prominent>Find My Circle</NavLink>
-            </>
-          )}
-        </nav>
+        <div className="flex min-w-0 max-w-[calc(100vw-8rem)] shrink items-center gap-1 sm:gap-2">
+          <nav className="flex min-w-0 items-center gap-0 overflow-x-auto text-xs font-medium [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-2 sm:text-sm [&::-webkit-scrollbar]:hidden [&>*]:shrink-0 [&>*]:whitespace-nowrap [&>a]:px-2 sm:[&>a]:px-4">
+            <NavLink href="/discover">Discover</NavLink>
+            <NavLink href="/events">Events</NavLink>
+            <NavLink href="/posts">Posts</NavLink>
+            {user ? (
+              <>
+                <NavLink href="/connections">My Connections</NavLink>
+                <MessageNavIcon />
+                <NotificationBell />
+              </>
+            ) : (
+              <>
+                <NavLink href="/login">Log in</NavLink>
+                <NavLink href="/onboarding" prominent>Find My Circle</NavLink>
+              </>
+            )}
+          </nav>
+          {user && <ProfileMenu />}
+        </div>
       </div>
     </header>
   );
