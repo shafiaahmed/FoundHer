@@ -9,6 +9,7 @@ type Status = "idle" | "sending" | "sent" | "error";
 export function LoginForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/onboarding";
+  const callbackError = searchParams.get("error");
 
   const [email, setEmail] = useState("");
   const [attested, setAttested] = useState(false);
@@ -82,6 +83,13 @@ export function LoginForm() {
             <p className="mt-1.5 text-sm text-stone-600">
               Enter your email and we&apos;ll send you a magic link &mdash; no password needed.
             </p>
+            {callbackError && (
+              <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {callbackError === "otp_expired"
+                  ? "This sign-in link has expired or was already used. Request a new link below."
+                  : "That sign-in link could not be verified. Request a new link and try again."}
+              </p>
+            )}
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <input

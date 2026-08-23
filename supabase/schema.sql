@@ -144,7 +144,17 @@ create policy "Users can view messages they sent or received"
 
 create policy "Users can send messages as themselves"
   on public.messages for insert
-  with check (auth.uid() = sender_id);
+  with check (
+    auth.uid() = sender_id
+    and exists (
+      select 1
+      from public.connections as connection
+      where
+        (connection.user_id = sender_id and connection.profile_id = recipient_id::text)
+        or
+        (connection.user_id = recipient_id and connection.profile_id = sender_id::text)
+    )
+  );
 
 -- Community posts shared by signed-in FoundHer members.
 create table if not exists public.posts (

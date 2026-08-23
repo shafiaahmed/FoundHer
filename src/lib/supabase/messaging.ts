@@ -45,7 +45,7 @@ export interface ThreadSummary {
   lastMessage: MessageRow | null;
 }
 
-/** Everyone the signed-in user can message: people they've connected with, plus anyone they already have a thread with. */
+/** Everyone the signed-in user currently has an active connection with. */
 export async function getMyThreads(): Promise<ThreadSummary[]> {
   const user = await getCurrentUser();
   if (!user) return [];
@@ -67,8 +67,6 @@ export async function getMyThreads(): Promise<ThreadSummary[]> {
       : connection.user_id;
     if (isRealProfileId(otherId)) otherIds.add(otherId);
   });
-  allMessages.forEach((m) => otherIds.add(m.sender_id === user.id ? m.recipient_id : m.sender_id));
-
   const threads = await Promise.all(
     Array.from(otherIds).map(async (otherId): Promise<ThreadSummary | null> => {
       const profile = await getProfileByIdIncludingReal(otherId);
