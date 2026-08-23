@@ -15,7 +15,10 @@ export default async function ConnectionsPage() {
   const connections = await getMyConnections();
   const resolved = await Promise.all(
     connections.map(async (connection) => {
-      const profile = await getProfileByIdIncludingReal(connection.profile_id);
+      const otherUserId = connection.user_id === user.id
+        ? connection.profile_id
+        : connection.user_id;
+      const profile = await getProfileByIdIncludingReal(otherUserId);
       return profile ? { connection, profile } : null;
     })
   );
@@ -25,7 +28,7 @@ export default async function ConnectionsPage() {
     <div className="mx-auto max-w-3xl px-6 py-14">
       <h1 className="text-2xl font-semibold text-stone-900">My Connections</h1>
       <p className="mt-1.5 text-stone-600">
-        Everyone you&apos;ve reached out to on FoundHer, and the message you sent them.
+        The women you&apos;ve connected with on FoundHer.
       </p>
 
       {items.length === 0 ? (

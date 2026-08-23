@@ -30,11 +30,8 @@ create policy "Users can update their own profile"
   on public.profiles for update
   using (auth.uid() = id);
 
--- Connection requests a user has sent to the mock/demo profiles shown on
--- Discover. profile_id refers to a Profile.id from src/data/profiles.ts,
--- not a row in this database — those profiles aren't real accounts, so
--- this only tracks outreach the signed-in user has sent, not mutual
--- friendships.
+-- Connections between FoundHer members. profile_id remains text so the
+-- existing mock/demo Discover profiles can still be saved as outreach.
 create table if not exists public.connections (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -46,17 +43,17 @@ create table if not exists public.connections (
 
 alter table public.connections enable row level security;
 
-create policy "Users can view their own connections"
+create policy "Connection participants can view connections"
   on public.connections for select
-  using (auth.uid() = user_id);
+  using (auth.uid() = user_id or auth.uid()::text = profile_id);
 
 create policy "Users can create their own connections"
   on public.connections for insert
   with check (auth.uid() = user_id);
 
-create policy "Users can remove their own connections"
+create policy "Connection participants can remove connections"
   on public.connections for delete
-  using (auth.uid() = user_id);
+  using (auth.uid() = user_id or auth.uid()::text = profile_id);
 
 -- Required for upsert (sending a request to someone you already reached out
 -- to before) to work — that's an insert-or-update under the hood.

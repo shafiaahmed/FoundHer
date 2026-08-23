@@ -15,8 +15,10 @@ export async function checkCanMessage(
   const { data: connection } = await supabase
     .from("connections")
     .select("id")
-    .eq("user_id", myId)
-    .eq("profile_id", otherId)
+    .or(
+      `and(user_id.eq.${myId},profile_id.eq.${otherId}),and(user_id.eq.${otherId},profile_id.eq.${myId})`
+    )
+    .limit(1)
     .maybeSingle();
 
   if (connection) return true;

@@ -61,7 +61,12 @@ export async function getMyThreads(): Promise<ThreadSummary[]> {
   const allMessages = [...(sentResult.data ?? []), ...(receivedResult.data ?? [])];
 
   const otherIds = new Set<string>();
-  connections.filter((c) => isRealProfileId(c.profile_id)).forEach((c) => otherIds.add(c.profile_id));
+  connections.forEach((connection) => {
+    const otherId = connection.user_id === user.id
+      ? connection.profile_id
+      : connection.user_id;
+    if (isRealProfileId(otherId)) otherIds.add(otherId);
+  });
   allMessages.forEach((m) => otherIds.add(m.sender_id === user.id ? m.recipient_id : m.sender_id));
 
   const threads = await Promise.all(

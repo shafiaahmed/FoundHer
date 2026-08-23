@@ -9,7 +9,7 @@ export interface ConnectionRow {
   created_at: string;
 }
 
-/** Returns the signed-in user's sent connection requests, newest first, or [] if signed out. */
+/** Returns connections where the signed-in user is either participant. */
 export async function getMyConnections(): Promise<ConnectionRow[]> {
   const user = await getCurrentUser();
   if (!user) return [];
@@ -18,7 +18,7 @@ export async function getMyConnections(): Promise<ConnectionRow[]> {
   const { data } = await supabase
     .from("connections")
     .select("*")
-    .eq("user_id", user.id)
+    .or(`user_id.eq.${user.id},profile_id.eq.${user.id}`)
     .order("created_at", { ascending: false });
 
   return data ?? [];

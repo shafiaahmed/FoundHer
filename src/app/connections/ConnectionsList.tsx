@@ -83,7 +83,7 @@ export function ConnectionsList({ items }: { items: ConnectionItem[] }) {
                       {profile.university} &middot; {profile.program}
                     </p>
                     <p className="mt-0.5 text-xs text-stone-400">
-                      Sent{" "}
+                      Connected{" "}
                       {new Date(connection.created_at).toLocaleDateString(undefined, {
                         month: "short",
                         day: "numeric",
@@ -95,9 +95,11 @@ export function ConnectionsList({ items }: { items: ConnectionItem[] }) {
                 <RemoveConnectionButton connectionId={connection.id} />
               </div>
 
-              <p className="mt-4 rounded-xl bg-violet-50/70 p-3 text-sm text-violet-900">
-                {connection.message}
-              </p>
+              {connection.message && (
+                <p className="mt-4 rounded-xl bg-violet-50/70 p-3 text-sm text-violet-900">
+                  {connection.message}
+                </p>
+              )}
             </div>
           ))}
         </div>
