@@ -138,7 +138,7 @@ export default function EventsPage() {
   const hasActiveFilters = searchQuery || selectedTypes.length > 0 || selectedTags.length > 0;
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-gradient-to-br from-[#f2e9ed] via-[#f1eadb] to-[#dcd0e5]">
+    <main className="relative isolate min-h-screen overflow-clip bg-gradient-to-br from-[#f2e9ed] via-[#f1eadb] to-[#dcd0e5]">
       <div className="pointer-events-none absolute -right-32 -top-24 h-80 w-80 rounded-full bg-violet-300/40 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-40 left-[-8%] h-96 w-96 rounded-full bg-rose-100/45 blur-3xl" />
       <div className="pointer-events-none absolute -left-40 top-24 h-72 w-72 rounded-full bg-violet-200/25 blur-3xl" />
@@ -167,8 +167,8 @@ export default function EventsPage() {
       <div className="relative z-10 mx-auto max-w-7xl px-6 py-8">
         <div className="flex gap-8">
           {/* Sidebar Filters */}
-          <aside className="w-64 flex-shrink-0">
-            <div className="sticky top-20 space-y-4">
+          <aside className="sticky top-24 h-fit w-64 flex-shrink-0 self-start">
+            <div className="space-y-4">
               {/* Search */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-stone-700">
