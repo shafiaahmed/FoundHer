@@ -222,11 +222,10 @@ export function DiscoverContent() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {suggested.map(({ profile, score, reasons }) => (
+            {suggested.map(({ profile, reasons }) => (
               <ProfileCard
                 key={profile.id}
                 profile={profile}
-                score={score}
                 reasons={reasons}
               />
             ))}
