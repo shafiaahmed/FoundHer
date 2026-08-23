@@ -33,6 +33,16 @@ export function formatEventDate(dateString: string): string {
   });
 }
 
+export function getEventDateTime(dateString: string, timeString = "23:59"): Date {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const [hours, minutes] = timeString.split(":").map(Number);
+  return new Date(year, month - 1, day, hours || 0, minutes || 0);
+}
+
+export function isEventPast(dateString: string, timeString?: string): boolean {
+  return getEventDateTime(dateString, timeString).getTime() < Date.now();
+}
+
 /**
  * Format time string (HH:MM) to readable format
  * E.g., "14:30" → "2:30 PM"

@@ -1,5 +1,6 @@
 import { Event, EventRecommendation, Profile, EventFilter } from "@/lib/types";
 import { events as sampleEvents } from "@/data/events";
+import { getEventDateTime } from "@/lib/format";
 import { getExternalEventsWithCache } from "./externalEvents";
 
 /**
@@ -83,7 +84,7 @@ function scoreEvent(userProfile: Profile, event: Event): number {
   }
 
   // Bonus for events in the future (within 60 days)
-  const eventDate = new Date(event.date);
+  const eventDate = getEventDateTime(event.date, event.time);
   const today = new Date();
   const daysUntilEvent = (eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
   if (daysUntilEvent > 0 && daysUntilEvent <= 60) {
@@ -170,7 +171,10 @@ export function filterEvents(
   }
 
   // Sort by date (nearest first)
-  filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  filtered.sort(
+    (a, b) =>
+      getEventDateTime(a.date, a.time).getTime() - getEventDateTime(b.date, b.time).getTime()
+  );
 
   return filtered;
 }

@@ -2,7 +2,7 @@
 
 import { Event } from "@/lib/types";
 import Link from "next/link";
-import { formatEventDate } from "@/lib/format";
+import { formatEventDate, formatEventTime, isEventPast } from "@/lib/format";
 
 interface EventCardProps {
   event: Event;
@@ -12,9 +12,7 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, score, onRsvp, onJoinRequest }: EventCardProps) {
-  const eventDate = new Date(event.date);
-  const today = new Date();
-  const isPast = eventDate < today;
+  const isPast = isEventPast(event.date, event.time);
 
   // Color coding for event types
   const eventTypeColors: Record<string, string> = {
@@ -71,7 +69,7 @@ export default function EventCard({ event, score, onRsvp, onJoinRequest }: Event
           <div className="flex items-center gap-2">
             <span className="font-semibold">📅</span>
             <span>
-              {formatEventDate(event.date)} at {event.time}
+              {formatEventDate(event.date)} at {formatEventTime(event.time)}
             </span>
           </div>
           <div className="flex items-center gap-2">
