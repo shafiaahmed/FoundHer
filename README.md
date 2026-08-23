@@ -2,6 +2,8 @@
 
 FoundHer helps women in tech at universities find mentors, study partners, hackathon teammates, and peers who share their background matched to what they're actually looking for, not just who they already know.
 
+**Live:** deployed on [Render](https://render.com) — add your deployed URL here.
+
 ## Tech stack
 
 - Next.js (App Router) + TypeScript + Tailwind CSS
@@ -51,3 +53,11 @@ npm run build   # production build
 npm run start   # run a production build
 npm run lint    # lint the codebase
 ```
+
+## Deployment
+
+The app is deployed on [Render](https://render.com) as a Node web service:
+
+- **Build command:** `npm run build`
+- **Start command:** `npm run start`
+- Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `GEMINI_API_KEY` as environment variables in the Render dashboard — Render doesn't read `.env.local`.
