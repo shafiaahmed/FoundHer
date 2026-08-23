@@ -7,9 +7,7 @@ import { ProfileCarousel } from "@/components/ProfileCarousel";
 import { PROFILES } from "@/data/profiles";
 import { HELP_CATEGORIES, INTERESTS, UNIVERSITIES } from "@/data/options";
 import { getRecommendations } from "@/lib/matching";
-import { ProfileRow, toProfile } from "@/lib/profileRow";
-import { createClient } from "@/lib/supabase/client";
-import { MatchResult, Profile } from "@/lib/types";
+import { MatchResult } from "@/lib/types";
 
 const SUGGESTIONS = [
   "I have my first technical interview next week and want to practice LeetCode",
@@ -28,10 +26,7 @@ export function DiscoverContent() {
 
   const [query, setQuery] = useState(initialQuery);
   const [submittedQuery, setSubmittedQuery] = useState(initialQuery);
-  const [allProfiles, setAllProfiles] = useState<Profile[]>(PROFILES);
-  const [results, setResults] = useState<MatchResult[]>(() =>
-    getRecommendations(initialQuery, { profiles: PROFILES })
-  );
+  const [results, setResults] = useState<MatchResult[]>(() => getRecommendations(initialQuery));
   const [source, setSource] = useState<MatchSource>("keyword");
   const [aiLoading, setAiLoading] = useState(Boolean(initialQuery));
   const [aiUnavailable, setAiUnavailable] = useState(false);
@@ -39,44 +34,13 @@ export function DiscoverContent() {
   const [universityFilter, setUniversityFilter] = useState("");
   const [interestFilter, setInterestFilter] = useState("");
   const [helpFilter, setHelpFilter] = useState("");
-  const [companyFilter, setCompanyFilter] = useState("");
-
-  // Bring real signed-up users into the searchable/browsable pool alongside the mock profiles.
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      const { data } = await supabase.from("profiles").select("*").returns<ProfileRow[]>();
-      if (cancelled || !data) return;
-
-      // Default the search box to your own company as a starting point — still fully editable.
-      const me = data.find((row) => row.id === user?.id);
-      if (me?.company) {
-        setCompanyFilter((current) => current || me.company!);
-      }
-
-      const realProfiles = data.filter((row) => row.id !== user?.id).map(toProfile);
-      if (realProfiles.length === 0) return;
-
-      setAllProfiles((current) => [...current, ...realProfiles]);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   async function runSearch(searchQuery: string) {
     setSubmittedQuery(searchQuery);
     setAiUnavailable(false);
 
     // Instant local results so the UI never feels stuck waiting on the network.
-    setResults(getRecommendations(searchQuery, { profiles: allProfiles }));
+    setResults(getRecommendations(searchQuery));
     setSource("keyword");
 
     if (!searchQuery.trim()) return;
@@ -135,18 +99,13 @@ export function DiscoverContent() {
   const suggested = submittedQuery ? results.slice(0, SUGGESTED_COUNT) : [];
 
   const browsable = useMemo(() => {
-    const normalizedCompany = companyFilter.trim().toLowerCase();
-
-    return allProfiles
-      .filter((profile) => {
-        if (universityFilter && profile.university !== universityFilter) return false;
-        if (interestFilter && !(profile.interests as string[]).includes(interestFilter)) return false;
-        if (helpFilter && !(profile.helpWith as string[]).includes(helpFilter)) return false;
-        if (normalizedCompany && !profile.company?.toLowerCase().includes(normalizedCompany)) return false;
-        return true;
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allProfiles, universityFilter, interestFilter, helpFilter, companyFilter]);
+    return PROFILES.filter((profile) => {
+      if (universityFilter && profile.university !== universityFilter) return false;
+      if (interestFilter && !(profile.interests as string[]).includes(interestFilter)) return false;
+      if (helpFilter && !(profile.helpWith as string[]).includes(helpFilter)) return false;
+      return true;
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  }, [universityFilter, interestFilter, helpFilter]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
@@ -202,25 +161,24 @@ export function DiscoverContent() {
 
       {submittedQuery && (
         <div className="mt-12">
-          <div className="mb-1 flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold text-stone-900">Suggested for you</h2>
-            {aiLoading && (
-              <span className="text-xs font-medium text-violet-500">Refining with AI&hellip;</span>
-            )}
-            {!aiLoading && source === "ai" && (
-              <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-600">
-                AI-matched
-              </span>
-            )}
-            {!aiLoading && aiUnavailable && (
-              <span className="text-xs font-medium text-stone-400">
-                AI matching unavailable &mdash; showing keyword matches
-              </span>
-            )}
+          <div className="mb-5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-stone-900">Suggested for you</h2>
+              {aiLoading && (
+                <span className="text-xs font-medium text-violet-500">Refining with AI&hellip;</span>
+              )}
+              {!aiLoading && source === "ai" && (
+                <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-600">
+                  AI-matched
+                </span>
+              )}
+              {!aiLoading && aiUnavailable && (
+                <span className="text-xs font-medium text-stone-400">
+                  AI matching unavailable &mdash; showing keyword matches
+                </span>
+              )}
+            </div>
           </div>
-          <p className="mb-5 text-sm text-stone-500">
-            Results for: <span className="font-medium text-stone-700">&ldquo;{submittedQuery}&rdquo;</span>
-          </p>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {suggested.map(({ profile, score, reasons }) => (
@@ -276,22 +234,13 @@ export function DiscoverContent() {
             ))}
           </select>
 
-          <input
-            type="text"
-            value={companyFilter}
-            onChange={(event) => setCompanyFilter(event.target.value)}
-            placeholder="Search by company"
-            className="rounded-full border border-stone-300 bg-white px-3.5 py-2 text-sm text-stone-700 placeholder:text-stone-400 focus:border-violet-400 focus:outline-none"
-          />
-
-          {(universityFilter || interestFilter || helpFilter || companyFilter) && (
+          {(universityFilter || interestFilter || helpFilter) && (
             <button
               type="button"
               onClick={() => {
                 setUniversityFilter("");
                 setInterestFilter("");
                 setHelpFilter("");
-                setCompanyFilter("");
               }}
               className="rounded-full px-3.5 py-2 text-sm font-medium text-violet-700 transition hover:bg-violet-50"
             >

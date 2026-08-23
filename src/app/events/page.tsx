@@ -138,15 +138,20 @@ export default function EventsPage() {
   const hasActiveFilters = searchQuery || selectedTypes.length > 0 || selectedTags.length > 0;
 
   return (
-    <main className="min-h-screen bg-stone-50">
+    <main className="relative isolate min-h-screen overflow-hidden bg-gradient-to-br from-[#f2e9ed] via-[#f1eadb] to-[#dcd0e5]">
+      <div className="pointer-events-none absolute -right-32 -top-24 h-80 w-80 rounded-full bg-violet-300/40 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 left-[-8%] h-96 w-96 rounded-full bg-rose-100/45 blur-3xl" />
+      <div className="pointer-events-none absolute -left-40 top-24 h-72 w-72 rounded-full bg-violet-200/25 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 right-[8%] h-80 w-80 rounded-full bg-violet-300/25 blur-3xl" />
+      <div className="pointer-events-none absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(92,40,95,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(92,40,95,0.045)_1px,transparent_1px)] [background-size:48px_48px]" />
       {/* Header */}
-      <div className="border-b border-stone-200 bg-white px-6 py-8">
+      <div className="relative z-10 border-b border-white/50 bg-white/25 px-6 py-8 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-stone-900">Events</h1>
-              <p className="mt-2 text-stone-600">
-                Discover hackathons, workshops, networking events, and more
+              <h1 className="text-3xl font-bold text-stone-900 sm:text-4xl">Events</h1>
+              <p className="mt-3 max-w-md border-l-2 border-violet-600 pl-3 text-sm font-medium leading-relaxed text-stone-700 sm:text-base">
+                Discover Hackathons, Workshops, Networking Events, And More
               </p>
             </div>
             <Link
@@ -159,7 +164,7 @@ export default function EventsPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 py-8">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 py-8">
         <div className="flex gap-8">
           {/* Sidebar Filters */}
           <aside className="w-64 flex-shrink-0">

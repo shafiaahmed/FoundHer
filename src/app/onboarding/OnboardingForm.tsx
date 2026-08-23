@@ -68,7 +68,14 @@ export function OnboardingForm({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-14">
+    <div className="relative isolate overflow-hidden bg-gradient-to-br from-[#ede1e6] via-[#e9e1d1] to-[#d2c2dc]">
+      <div className="pointer-events-none absolute -right-32 -top-24 h-80 w-80 rounded-full bg-violet-300/40 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 left-[-8%] h-96 w-96 rounded-full bg-rose-100/45 blur-3xl" />
+      <div className="pointer-events-none absolute -left-40 top-24 h-72 w-72 rounded-full bg-violet-200/25 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 right-[8%] h-80 w-80 rounded-full bg-violet-300/25 blur-3xl" />
+      <div className="pointer-events-none absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(92,40,95,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(92,40,95,0.045)_1px,transparent_1px)] [background-size:48px_48px]" />
+
+      <div className="relative mx-auto max-w-2xl px-6 py-14">
       <div className="mb-8">
         <div className="flex items-center justify-between text-sm font-medium text-stone-500">
           <span>Step {step} of {TOTAL_STEPS}</span>
@@ -237,6 +244,7 @@ export function OnboardingForm({ userId }: { userId: string }) {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

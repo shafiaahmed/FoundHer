@@ -90,9 +90,14 @@ export default function CreateEventPage() {
   }));
 
   return (
-    <main className="min-h-screen bg-stone-50">
+    <main className="relative isolate min-h-screen overflow-hidden bg-gradient-to-br from-[#ede1e6] via-[#e9e1d1] to-[#d2c2dc]">
+      <div className="pointer-events-none absolute -right-32 -top-24 h-80 w-80 rounded-full bg-violet-300/40 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 left-[-8%] h-96 w-96 rounded-full bg-rose-100/45 blur-3xl" />
+      <div className="pointer-events-none absolute -left-40 top-24 h-72 w-72 rounded-full bg-violet-200/25 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 right-[8%] h-80 w-80 rounded-full bg-violet-300/25 blur-3xl" />
+      <div className="pointer-events-none absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(92,40,95,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(92,40,95,0.045)_1px,transparent_1px)] [background-size:48px_48px]" />
       {/* Header */}
-      <div className="border-b border-stone-200 bg-white">
+      <div className="relative z-10 border-b border-white/50 bg-white/25 backdrop-blur-sm">
         <div className="mx-auto max-w-3xl px-6 py-6">
           <Link href="/events" className="text-sm font-semibold text-violet-600 hover:text-violet-700">
             ← Back to Events
@@ -100,9 +105,9 @@ export default function CreateEventPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-3xl px-6 py-8">
+      <div className="relative z-10 mx-auto max-w-3xl px-6 py-8">
         <div className="rounded-2xl border border-stone-200 bg-white p-8">
-          <h1 className="mb-2 text-3xl font-bold text-stone-900">Create Event</h1>
+          <h1 className="mb-2 text-3xl font-bold text-stone-900 sm:text-4xl">Create Event</h1>
           <p className="mb-8 text-stone-600">
             Share an event with the FoundHer community. Hackathons, study sessions, networking
             events, and more!
