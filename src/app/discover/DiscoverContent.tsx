@@ -7,7 +7,9 @@ import { ProfileCarousel } from "@/components/ProfileCarousel";
 import { PROFILES } from "@/data/profiles";
 import { HELP_CATEGORIES, INTERESTS, UNIVERSITIES } from "@/data/options";
 import { getRecommendations } from "@/lib/matching";
-import { MatchResult } from "@/lib/types";
+import { ProfileRow, toProfile } from "@/lib/profileRow";
+import { createClient } from "@/lib/supabase/client";
+import { MatchResult, Profile } from "@/lib/types";
 
 const SUGGESTIONS = [
   "I have my first technical interview next week and want to practice LeetCode",
@@ -26,8 +28,9 @@ export function DiscoverContent() {
 
   const [query, setQuery] = useState(initialQuery);
   const [submittedQuery, setSubmittedQuery] = useState(initialQuery);
+  const [allProfiles, setAllProfiles] = useState<Profile[]>(PROFILES);
   const [results, setResults] = useState<MatchResult[]>(() =>
-    getRecommendations(initialQuery),
+    getRecommendations(initialQuery, { profiles: PROFILES }),
   );
   const [source, setSource] = useState<MatchSource>("keyword");
   const [aiLoading, setAiLoading] = useState(Boolean(initialQuery));
@@ -36,13 +39,39 @@ export function DiscoverContent() {
   const [universityFilter, setUniversityFilter] = useState("");
   const [interestFilter, setInterestFilter] = useState("");
   const [helpFilter, setHelpFilter] = useState("");
+  const [companyFilter, setCompanyFilter] = useState("");
+
+  // Include real FoundHer members in Discover alongside the demo profiles.
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const { data } = await supabase.from("profiles").select("*").returns<ProfileRow[]>();
+
+      if (cancelled || !data) return;
+
+      const me = data.find((row) => row.id === user?.id);
+      if (me?.company) setCompanyFilter((current) => current || me.company!);
+
+      const realProfiles = data.filter((row) => row.id !== user?.id).map(toProfile);
+      setAllProfiles([...PROFILES, ...realProfiles]);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function runSearch(searchQuery: string) {
     setSubmittedQuery(searchQuery);
     setAiUnavailable(false);
 
     // Instant local results so the UI never feels stuck waiting on the network.
-    setResults(getRecommendations(searchQuery));
+    setResults(getRecommendations(searchQuery, { profiles: allProfiles }));
     setSource("keyword");
 
     if (!searchQuery.trim()) return;
@@ -101,7 +130,9 @@ export function DiscoverContent() {
   const suggested = submittedQuery ? results.slice(0, SUGGESTED_COUNT) : [];
 
   const browsable = useMemo(() => {
-    return PROFILES.filter((profile) => {
+    const normalizedCompany = companyFilter.trim().toLowerCase();
+
+    return allProfiles.filter((profile) => {
       if (universityFilter && profile.university !== universityFilter)
         return false;
       if (
@@ -111,9 +142,11 @@ export function DiscoverContent() {
         return false;
       if (helpFilter && !(profile.helpWith as string[]).includes(helpFilter))
         return false;
+      if (normalizedCompany && !profile.company?.toLowerCase().includes(normalizedCompany))
+        return false;
       return true;
     }).sort((a, b) => a.name.localeCompare(b.name));
-  }, [universityFilter, interestFilter, helpFilter]);
+  }, [allProfiles, universityFilter, interestFilter, helpFilter, companyFilter]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
@@ -251,13 +284,23 @@ export function DiscoverContent() {
             ))}
           </select>
 
-          {(universityFilter || interestFilter || helpFilter) && (
+          <input
+            type="search"
+            value={companyFilter}
+            onChange={(event) => setCompanyFilter(event.target.value)}
+            placeholder="Search by company"
+            aria-label="Search profiles by company"
+            className="rounded-full border border-stone-300 bg-white px-3.5 py-2 text-sm text-stone-700 placeholder:text-stone-400 focus:border-violet-400 focus:outline-none"
+          />
+
+          {(universityFilter || interestFilter || helpFilter || companyFilter) && (
             <button
               type="button"
               onClick={() => {
                 setUniversityFilter("");
                 setInterestFilter("");
                 setHelpFilter("");
+                setCompanyFilter("");
               }}
               className="rounded-full px-3.5 py-2 text-sm font-medium text-violet-700 transition hover:bg-violet-50"
             >
