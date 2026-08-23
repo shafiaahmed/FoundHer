@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { LogoutButton } from "@/components/LogoutButton";
 import { NavLink } from "@/components/NavLink";
 import { NotificationBell } from "@/components/NotificationBell";
 import { MessageNavIcon } from "@/components/MessageNavIcon";
+import { ProfileMenu } from "@/components/ProfileMenu";
 import { getCurrentUser } from "@/lib/supabase/auth";
 
 export async function Navbar() {
@@ -19,11 +19,10 @@ export async function Navbar() {
           <NavLink href="/events">Events</NavLink>
           {user ? (
             <>
-              <NavLink href="/account">My Profile</NavLink>
               <NavLink href="/connections">My Connections</NavLink>
               <MessageNavIcon />
               <NotificationBell />
-              <LogoutButton />
+              <ProfileMenu />
             </>
           ) : (
             <>
