@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Section, TagList } from "@/components/ProfileDetailSections";
+import { AccountPosts } from "./AccountPosts";
 import { getCurrentUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getMyProfile } from "@/lib/supabase/profile";
-import { Event } from "@/lib/types";
+import { CommunityPost, Event, PostCategory } from "@/lib/types";
 import { formatEventDate, formatEventTime } from "@/lib/format";
 
 export default async function AccountPage() {
@@ -21,11 +22,18 @@ export default async function AccountPage() {
   }
 
   const supabase = await createClient();
-  const { data: myEventsData } = await supabase
-    .from("events")
-    .select("*")
-    .eq("creator_id", user.id)
-    .order("date", { ascending: true });
+  const [{ data: myEventsData }, { data: myPostsData }] = await Promise.all([
+    supabase
+      .from("events")
+      .select("*")
+      .eq("creator_id", user.id)
+      .order("date", { ascending: true }),
+    supabase
+      .from("posts")
+      .select("id,author_id,author_name,category,content,created_at,updated_at")
+      .eq("author_id", user.id)
+      .order("created_at", { ascending: false }),
+  ]);
 
   const myEvents: Event[] = (myEventsData ?? []).map((event) => ({
     id: event.id,
@@ -45,6 +53,16 @@ export default async function AccountPage() {
     isExternal: Boolean(event.is_external ?? false),
     externalId: event.external_id ?? undefined,
     url: event.url ?? undefined,
+  }));
+
+  const myPosts: CommunityPost[] = (myPostsData ?? []).map((post) => ({
+    id: post.id,
+    authorId: post.author_id,
+    authorName: post.author_name,
+    category: post.category as PostCategory,
+    content: post.content,
+    createdAt: post.created_at,
+    updatedAt: post.updated_at,
   }));
 
   return (
@@ -133,6 +151,8 @@ export default async function AccountPage() {
             </div>
           )}
         </div>
+
+        <AccountPosts initialPosts={myPosts} />
 
         <div className="mt-8 flex flex-wrap gap-3 border-t border-stone-100 pt-6">
           <Link

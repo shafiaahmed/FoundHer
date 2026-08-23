@@ -35,7 +35,7 @@ const CATEGORY_DETAILS: Record<
 };
 
 const CATEGORIES = Object.keys(CATEGORY_DETAILS) as PostCategory[];
-type Filter = "all" | PostCategory;
+type Filter = "all" | "mine" | PostCategory;
 
 interface PostsContentProps {
   initialPosts: CommunityPost[];
@@ -58,10 +58,11 @@ export function PostsContent({
   const [error, setError] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
-  const visiblePosts = useMemo(
-    () => (filter === "all" ? posts : posts.filter((post) => post.category === filter)),
-    [filter, posts]
-  );
+  const visiblePosts = useMemo(() => {
+    if (filter === "all") return posts;
+    if (filter === "mine") return posts.filter((post) => post.authorId === currentUserId);
+    return posts.filter((post) => post.category === filter);
+  }, [currentUserId, filter, posts]);
 
   async function publishPost(event: FormEvent) {
     event.preventDefault();
@@ -210,6 +211,9 @@ export function PostsContent({
                 <FilterButton selected={filter === "all"} onClick={() => setFilter("all")}>
                   All
                 </FilterButton>
+                <FilterButton selected={filter === "mine"} onClick={() => setFilter("mine")}>
+                  My posts
+                </FilterButton>
                 {CATEGORIES.map((option) => (
                   <FilterButton
                     key={option}
@@ -227,7 +231,7 @@ export function PostsContent({
                 visiblePosts.map((post) => {
                   const details = CATEGORY_DETAILS[post.category];
                   return (
-                    <article key={post.id} className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
+                    <article id={`post-${post.id}`} key={post.id} className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex min-w-0 items-center gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-700">
@@ -288,8 +292,14 @@ export function PostsContent({
                 })
               ) : (
                 <div className="rounded-2xl border border-dashed border-stone-300 bg-white/60 px-6 py-12 text-center">
-                  <p className="font-semibold text-stone-700">No posts here yet</p>
-                  <p className="mt-1 text-sm text-stone-500">Be the first to start this conversation.</p>
+                  <p className="font-semibold text-stone-700">
+                    {filter === "mine" ? "You haven't posted yet" : "No posts here yet"}
+                  </p>
+                  <p className="mt-1 text-sm text-stone-500">
+                    {filter === "mine"
+                      ? "Use the form above to share something with the community."
+                      : "Be the first to start this conversation."}
+                  </p>
                 </div>
               )}
             </div>
