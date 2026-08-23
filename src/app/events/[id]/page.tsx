@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Event } from "@/lib/types";
-import { formatEventDate } from "@/lib/format";
+import { formatEventDate, formatEventTime, isEventPast } from "@/lib/format";
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -215,7 +215,7 @@ export default function EventDetailPage() {
     );
   }
 
-  const isPast = new Date(event.date) < new Date();
+  const isPast = isEventPast(event.date, event.time);
 
   return (
     <main className="min-h-screen bg-stone-50">
@@ -251,7 +251,7 @@ export default function EventDetailPage() {
             <div>
               <p className="text-sm font-semibold text-stone-600">Date & Time</p>
               <p className="mt-1 text-lg text-stone-900">
-                {formatEventDate(event.date)} at {event.time}
+                {formatEventDate(event.date)} at {formatEventTime(event.time)}
               </p>
             </div>
             <div>

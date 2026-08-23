@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getMyProfile } from "@/lib/supabase/profile";
 import { Event } from "@/lib/types";
+import { formatEventDate, formatEventTime } from "@/lib/format";
 
 export default async function AccountPage() {
   const user = await getCurrentUser();
@@ -114,11 +115,7 @@ export default async function AccountPage() {
                     <p className="font-semibold text-stone-900">{event.title}</p>
                     <p className="text-sm text-stone-600">
                       {event.eventType} •{" "}
-                      {new Date(event.date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                      {formatEventDate(event.date)} at {formatEventTime(event.time)}
                     </p>
                   </div>
                   <Link
