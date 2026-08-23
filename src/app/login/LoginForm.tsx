@@ -13,11 +13,13 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [attested, setAttested] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!attested) return;
     setStatus("sending");
+    setErrorMessage("");
 
     try {
       const supabase = createClient();
@@ -32,9 +34,24 @@ export function LoginForm() {
         },
       });
 
-      setStatus(error ? "error" : "sent");
+      if (error) {
+        setStatus("error");
+        setErrorMessage(
+          error.code === "over_email_send_rate_limit"
+            ? "Too many sign-in emails have been requested. Please wait before trying again."
+            : error.code === "over_request_rate_limit"
+              ? "Too many sign-in attempts were made. Please wait a few minutes and try again."
+              : error.code === "email_address_not_authorized"
+                ? "Supabase is not configured to send login emails to this address."
+                : "We couldn't send your sign-in link. Please try again."
+        );
+        return;
+      }
+
+      setStatus("sent");
     } catch {
       setStatus("error");
+      setErrorMessage("We couldn't reach the login service. Please try again.");
     }
   }
 
@@ -91,7 +108,7 @@ export function LoginForm() {
               </button>
               {status === "error" && (
                 <p className="text-sm text-rose-600">
-                  Something went wrong sending your link. Please try again.
+                  {errorMessage}
                 </p>
               )}
             </form>
