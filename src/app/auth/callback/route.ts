@@ -3,7 +3,9 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const requestUrl = new URL(request.url);
+  const { searchParams } = requestUrl;
+  const origin = getPublicOrigin(request, requestUrl);
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const emailOtpType = searchParams.get("type") as EmailOtpType | null;
@@ -46,4 +48,24 @@ export async function GET(request: Request) {
 
   const errorCode = authResult?.error?.code ?? "auth";
   return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(errorCode)}`);
+}
+
+function getPublicOrigin(request: Request, requestUrl: URL) {
+  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.RENDER_EXTERNAL_URL;
+
+  if (configuredUrl) {
+    try {
+      return new URL(configuredUrl).origin;
+    } catch {
+      // Fall back to proxy headers if an environment URL was entered incorrectly.
+    }
+  }
+
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProtocol = request.headers.get("x-forwarded-proto");
+  if (forwardedHost) {
+    return `${forwardedProtocol ?? "https"}://${forwardedHost}`;
+  }
+
+  return requestUrl.origin;
 }
